@@ -1,0 +1,17 @@
+- goal：完成 specs 全部需求
+- sub agents：对于是独立的无依赖的 implement plan，建议可以起 sub agent 来负责单独隔离处理
+- spec memory：始终以 specs 为根源需求文档记忆
+- state：loop 过程中可以创建 tmp 临时目录时刻记录更新工作状态
+- how to loop：要求**必须**在 loop 开发每一个任务时
+	- 重新读一次当前 loop.md 确认记忆规则
+	- 开始前和开始后都需要做 specs 文档对照
+		- 开发前先确认理解 specs 下对应的内容要做什么
+		- 开发完成后再次 review 对比 specs 和实现的代码是否一致，如果不一致需要重新根据 spec 方案对齐代码实现，对齐结束后继续回到当前步骤 review， 直到完全一致才可进去下一个 task loop
+- coding：代码**必须**确保先思考如何设计、如何封装再开始实现
+	- 先确认当前实现应该放在 FE、BE，再确认应该放在什么目录层，最后确认应该在原文件里扩展还是隔离独立职责构建新文件
+	- 不论是否多出复用，独立的职责都应该抽离独立的组件/class/function/hook，拒绝代码堆叠，把可拆分的逻辑耦合在一份文件内导致一个文件数百上千行
+- when block：只根据 spec 的方案实现，开发过程中发现 block 问题应该停止 loop，输出 block point 重新讨论，严格拒绝为了解决问题而做不符合 specs 方案的 fallback 处理
+- production business：开发的同时优先保证不影响原业务需求
+- AI verify：
+	- UT
+	- 流程测试可通过 @computer plugin 打开浏览器测试
