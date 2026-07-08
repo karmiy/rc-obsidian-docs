@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AI Desk Skills 本地物化与原生发现上线方案</title>
+  <title>AI Desk Skills 本地物化与 Runtime 原生发现上线方案</title>
   <style>
     :root {
       --bg: #f6f7f9;
@@ -12,16 +12,12 @@
       --muted: #5d6878;
       --soft: #eef2f6;
       --line: #d9e0e8;
-      --line-strong: #bdc8d6;
       --blue: #2463eb;
       --blue-soft: #e8f0ff;
       --green: #078669;
       --green-soft: #e2f6ef;
       --amber: #a46a12;
       --amber-soft: #fff3d6;
-      --red: #bf3d2e;
-      --red-soft: #ffefed;
-      --purple: #6354c9;
       --purple-soft: #eeebff;
       --shadow: 0 14px 34px rgba(23, 32, 51, 0.07);
       --radius: 8px;
@@ -29,9 +25,7 @@
       --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -55,9 +49,7 @@
       box-shadow: var(--shadow);
     }
 
-    header {
-      padding: 36px 40px;
-    }
+    header { padding: 36px 40px; }
 
     section {
       margin-top: 24px;
@@ -74,9 +66,7 @@
       letter-spacing: 0;
     }
 
-    h1,
-    h2,
-    h3 {
+    h1, h2, h3 {
       margin: 0;
       letter-spacing: 0;
       line-height: 1.22;
@@ -84,7 +74,7 @@
 
     h1 {
       font-size: 36px;
-      max-width: 860px;
+      max-width: 900px;
     }
 
     h2 {
@@ -155,30 +145,10 @@
       min-height: 100%;
     }
 
-    .card.blue {
-      background: var(--blue-soft);
-      border-color: #bfd1ff;
-    }
-
-    .card.green {
-      background: var(--green-soft);
-      border-color: #b8e7d7;
-    }
-
-    .card.amber {
-      background: var(--amber-soft);
-      border-color: #edd08b;
-    }
-
-    .card.red {
-      background: var(--red-soft);
-      border-color: #efbdb5;
-    }
-
-    .card.purple {
-      background: var(--purple-soft);
-      border-color: #c9c2f4;
-    }
+    .card.blue { background: var(--blue-soft); border-color: #bfd1ff; }
+    .card.green { background: var(--green-soft); border-color: #b8e7d7; }
+    .card.amber { background: var(--amber-soft); border-color: #edd08b; }
+    .card.purple { background: var(--purple-soft); border-color: #c9c2f4; }
 
     .card p,
     .card li {
@@ -214,21 +184,15 @@
       color: #174ea6;
     }
 
-    ul,
-    ol {
+    ul, ol {
       margin: 10px 0 0;
       padding-left: 20px;
       color: var(--muted);
     }
 
-    li + li {
-      margin-top: 6px;
-    }
+    li + li { margin-top: 6px; }
 
-    code,
-    pre {
-      font-family: var(--mono);
-    }
+    code, pre { font-family: var(--mono); }
 
     code {
       padding: 2px 5px;
@@ -259,8 +223,7 @@
       font-size: 14px;
     }
 
-    th,
-    td {
+    th, td {
       padding: 12px 13px;
       border-bottom: 1px solid var(--line);
       text-align: left;
@@ -273,13 +236,8 @@
       font-weight: 800;
     }
 
-    td {
-      color: var(--muted);
-    }
-
-    tr:last-child td {
-      border-bottom: none;
-    }
+    td { color: var(--muted); }
+    tr:last-child td { border-bottom: none; }
 
     .diagram {
       overflow-x: auto;
@@ -303,25 +261,10 @@
       rx: 8;
     }
 
-    .box-blue {
-      fill: #e8f0ff;
-      stroke: #a9bfff;
-    }
-
-    .box-green {
-      fill: #e2f6ef;
-      stroke: #9bdcc7;
-    }
-
-    .box-amber {
-      fill: #fff3d6;
-      stroke: #e6c26b;
-    }
-
-    .box-purple {
-      fill: #eeebff;
-      stroke: #c6bff0;
-    }
+    .box-blue { fill: #e8f0ff; stroke: #a9bfff; }
+    .box-green { fill: #e2f6ef; stroke: #9bdcc7; }
+    .box-amber { fill: #fff3d6; stroke: #e6c26b; }
+    .box-purple { fill: #eeebff; stroke: #c6bff0; }
 
     .svg-title {
       font-size: 15px;
@@ -332,6 +275,12 @@
     .svg-text {
       font-size: 12.5px;
       fill: #4b5870;
+    }
+
+    .edge-label {
+      font-size: 11.5px;
+      fill: #64748b;
+      font-weight: 700;
     }
 
     .arrow {
@@ -353,9 +302,7 @@
       padding: 16px;
     }
 
-    .qa-item h3 {
-      margin-bottom: 7px;
-    }
+    .qa-item h3 { margin-bottom: 7px; }
 
     .status {
       display: inline-flex;
@@ -366,15 +313,8 @@
       font-weight: 800;
     }
 
-    .status.done {
-      color: var(--green);
-      background: var(--green-soft);
-    }
-
-    .status.next {
-      color: var(--blue);
-      background: var(--blue-soft);
-    }
+    .status.done { color: var(--green); background: var(--green-soft); }
+    .status.next { color: var(--blue); background: var(--blue-soft); }
 
     .footer {
       margin-top: 24px;
@@ -389,19 +329,9 @@
         padding-top: 24px;
       }
 
-      header,
-      section {
-        padding: 22px;
-      }
-
-      h1 {
-        font-size: 29px;
-      }
-
-      .grid-2,
-      .grid-3 {
-        grid-template-columns: 1fr;
-      }
+      header, section { padding: 22px; }
+      h1 { font-size: 29px; }
+      .grid-2, .grid-3 { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -455,7 +385,6 @@
               <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"></polygon>
             </marker>
           </defs>
-
           <rect x="36" y="72" width="210" height="98" class="box box-blue"></rect>
           <text x="58" y="105" class="svg-title">AI Desk BE</text>
           <text x="58" y="132" class="svg-text">installed skill manifest</text>
@@ -511,7 +440,6 @@
 
     <section>
       <h2>模块一：Skill 管理与本地暴露</h2>
-
       <div class="grid-2">
         <div>
           <h3>用户全局目录</h3>
@@ -579,33 +507,23 @@
       <div class="qa">
         <div class="qa-item">
           <h3>Q1. 为什么 symlink 方案可行？</h3>
-          <p>
-            Codex、Claude Code、Cursor、GitHub Copilot 均可以从各自 project skills 目录加载 symlink 指向的外部 skills。也就是说，AI Desk 不需要把所有 skill 文件复制到每个 task workspace，只要在 workspace 下提供 runtime 原生入口即可。
-          </p>
+          <p>Codex、Claude Code、Cursor、GitHub Copilot 均可以从各自 project skills 目录加载 symlink 指向的外部 skills。AI Desk 不需要把所有 skill 文件复制到每个 task workspace，只要在 workspace 下提供 runtime 原生入口即可。</p>
         </div>
         <div class="qa-item">
           <h3>Q2. 为什么不只创建 <code>.agents/skills</code>？</h3>
-          <p>
-            各 runtime 对 project skills 入口目录的支持不完全一致，其中 Claude Code 不支持从 <code>.agents/skills</code> 加载 project skills。为了覆盖 Codex、Claude Code、Cursor、GitHub Copilot，需要分别创建 <code>.codex/skills</code>、<code>.claude/skills</code>、<code>.cursor/skills</code>、<code>.github/skills</code>。
-          </p>
+          <p>各 runtime 对 project skills 入口目录的支持不完全一致，其中 Claude Code 不支持从 <code>.agents/skills</code> 加载 project skills。为了覆盖 Codex、Claude Code、Cursor、GitHub Copilot，需要分别创建 <code>.codex/skills</code>、<code>.claude/skills</code>、<code>.cursor/skills</code>、<code>.github/skills</code>。</p>
         </div>
         <div class="qa-item">
           <h3>Q3. 为什么不使用 <code>~/.aidesktop/skills/bug-analysis/1.0.0</code> 这种版本目录作为 runtime 可见路径？</h3>
-          <p>
-            runtime 在同一 session 中可能缓存已使用 skill 的 realpath。若 <code>bug-analysis</code> 从 <code>1.0.0</code> symlink 切到 <code>1.1.0</code>，Codex 仍可能继续读取旧版本目录。稳定路径原地替换可以避免该问题，因此版本号应记录在 manifest 中，而不是出现在 runtime 可见路径中。
-          </p>
+          <p>runtime 在同一 session 中可能缓存已使用 skill 的 realpath。若 <code>bug-analysis</code> 从 <code>1.0.0</code> symlink 切到 <code>1.1.0</code>，Codex 仍可能继续读取旧版本目录。稳定路径原地替换可以避免该问题，因此版本号应记录在 manifest 中，而不是出现在 runtime 可见路径中。</p>
         </div>
         <div class="qa-item">
           <h3>Q4. 为什么优先保持目录名和 <code>SKILL.md name</code> 一致？</h3>
-          <p>
-            不同 runtime 对 skill 可调用 ID 的理解不同：有的更看重目录名，有的更看重 frontmatter name。保持二者一致，可以让用户自然语言提到 skill name、skill 内部引用其他 skill、runtime 展示 skill 列表时都使用同一个名称。
-          </p>
+          <p>不同 runtime 对 skill 可调用 ID 的理解不同：有的更看重目录名，有的更看重 frontmatter name。保持二者一致，可以让用户自然语言提到 skill name、skill 内部引用其他 skill、runtime 展示 skill 列表时都使用同一个名称。</p>
         </div>
         <div class="qa-item">
           <h3>Q5. 为什么不建议在文件夹名或 skill name 后拼 id？</h3>
-          <p>
-            拼 id 后缀会让 runtime 可见名称偏离用户和 skill 内容里使用的真实名称。例如用户说 <code>bug-analysis</code>，但本地实际暴露的是 <code>bug-analysis-6f2a9c1e</code>，runtime 可能无法稳定对应。更关键的是，实验 4 中 Cursor 在“一个 skill 间接引用另一个 skill”的场景下，目录名与 <code>SKILL.md name</code> 不一致时没有成功触发链式 skill；这说明加后缀会破坏 skill 间按 name 自然引用的可靠性。上线方案因此不建议通过拼 id 解决同名问题，而应优先从 AI Desk 的安装或启用策略上避免同名 skill 同时暴露给 runtime。
-          </p>
+          <p>拼 id 后缀会让 runtime 可见名称偏离用户和 skill 内容里使用的真实名称。例如用户说 <code>bug-analysis</code>，但本地实际暴露的是 <code>bug-analysis-6f2a9c1e</code>，runtime 可能无法稳定对应。更关键的是，实验 4 中 Cursor 在“一个 skill 间接引用另一个 skill”的场景下，目录名与 <code>SKILL.md name</code> 不一致时没有成功触发链式 skill；这说明加后缀会破坏 skill 间按 name 自然引用的可靠性。上线方案因此不建议通过拼 id 解决同名问题，而应优先从 AI Desk 的安装或启用策略上避免同名 skill 同时暴露给 runtime。</p>
         </div>
       </div>
     </section>
@@ -613,28 +531,21 @@
     <section>
       <h2>模块二：Sync 方案</h2>
       <div class="diagram" aria-label="AI Desk skill sync 流程图">
-        <svg viewBox="0 0 1120 520" role="img">
+        <svg viewBox="0 0 1120 460" role="img">
           <defs>
             <marker id="arrowhead-sync" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
               <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"></polygon>
             </marker>
           </defs>
-          <style>
-            .arrow-sync { stroke: #64748b; stroke-width: 1.4; fill: none; marker-end: url(#arrowhead-sync); }
-            .edge-label { font-size: 11.5px; fill: #64748b; font-weight: 700; }
-          </style>
 
           <rect x="36" y="56" width="218" height="78" class="box box-blue"></rect>
           <text x="58" y="88" class="svg-title">前端启动并连接 daemon</text>
           <text x="58" y="114" class="svg-text">app startup / daemon ready</text>
 
-          <rect x="36" y="218" width="218" height="78" class="box box-blue"></rect>
-          <text x="58" y="250" class="svg-title">收到 Skill Change 推送</text>
-          <text x="58" y="276" class="svg-text">install / update / uninstall</text>
-
-          <rect x="36" y="380" width="218" height="78" class="box box-blue"></rect>
-          <text x="58" y="412" class="svg-title">用户点击 Install / Uninstall</text>
-          <text x="58" y="438" class="svg-text">local UI action completed</text>
+          <rect x="36" y="272" width="218" height="92" class="box box-blue"></rect>
+          <text x="58" y="303" class="svg-title">收到 BE Skill Change</text>
+          <text x="58" y="325" class="svg-title">socket 推送</text>
+          <text x="58" y="350" class="svg-text">install / update / uninstall</text>
 
           <rect x="350" y="42" width="250" height="92" class="box box-green"></rect>
           <text x="372" y="76" class="svg-title">统一 Skill Sync Pipeline</text>
@@ -664,24 +575,21 @@
           <text x="726" y="394" class="svg-title">6. 同步本地 Manifest</text>
           <text x="726" y="420" class="svg-text">commit final local state</text>
 
-          <path d="M254 95 C290 95 312 88 350 88" class="arrow-sync"></path>
+          <path d="M254 95 C290 95 312 88 350 88" class="arrow"></path>
           <text x="276" y="78" class="edge-label">触发同步</text>
-          <path d="M254 257 C296 246 316 126 350 100" class="arrow-sync"></path>
-          <text x="270" y="218" class="edge-label">触发同步</text>
-          <path d="M254 419 C306 405 318 130 350 110" class="arrow-sync"></path>
-          <text x="270" y="364" class="edge-label">触发同步</text>
-
-          <path d="M475 134 L475 168" class="arrow-sync"></path>
+          <path d="M254 318 C304 300 318 124 350 104" class="arrow"></path>
+          <text x="270" y="268" class="edge-label">触发同步</text>
+          <path d="M475 134 L475 168" class="arrow"></path>
           <text x="488" y="155" class="edge-label">开始</text>
-          <path d="M475 236 L475 262" class="arrow-sync"></path>
+          <path d="M475 236 L475 262" class="arrow"></path>
           <text x="488" y="255" class="edge-label">读取本机状态</text>
-          <path d="M475 330 L475 356" class="arrow-sync"></path>
+          <path d="M475 330 L475 356" class="arrow"></path>
           <text x="488" y="349" class="edge-label">对比</text>
-          <path d="M600 390 C658 386 652 126 704 126" class="arrow-sync"></path>
+          <path d="M600 390 C658 386 652 126 704 126" class="arrow"></path>
           <text x="628" y="248" class="edge-label">有差异</text>
-          <path d="M827 164 L827 224" class="arrow-sync"></path>
+          <path d="M827 164 L827 224" class="arrow"></path>
           <text x="840" y="198" class="edge-label">下载完成</text>
-          <path d="M827 302 L827 362" class="arrow-sync"></path>
+          <path d="M827 302 L827 362" class="arrow"></path>
           <text x="840" y="336" class="edge-label">写入完成</text>
         </svg>
       </div>
@@ -702,14 +610,9 @@
             <td>本地 <code>~/.aidesktop/skills</code> 在应用启动后快速收敛到服务端状态。</td>
           </tr>
           <tr>
-            <td>BE socket 推送</td>
+            <td>收到 BE Skill Change socket 推送</td>
             <td>收到 skill install、uninstall、version changed 事件后，进入同一条统一 Skill Sync Pipeline。</td>
-            <td>用户在 AI Desk 更新 skill 后，本地目录自动更新。</td>
-          </tr>
-          <tr>
-            <td>用户点击 install / uninstall</td>
-            <td>服务端安装状态变更成功后，进入同一条统一 Skill Sync Pipeline。</td>
-            <td>用户主动安装或卸载 skill 后，本地物化目录与最新安装状态一致。</td>
+            <td>用户在 AI Desk 安装、卸载或更新 skill 后，本地目录自动更新。</td>
           </tr>
         </tbody>
       </table>
@@ -768,21 +671,15 @@
       <div class="qa">
         <div class="qa-item">
           <h3>Q1. 为什么用 <code>id + version</code> 做 diff？</h3>
-          <p>
-            Skill 有服务端版本语义，且更新会自动变更 version。在保证同一个 <code>id + version</code> 内容不可变的前提下，<code>id + version</code> 足以判断本地是否需要下载更新。<code>sha256</code> 可作为后续完整性校验字段追加。
-          </p>
+          <p>Skill 有服务端版本语义，且更新会自动变更 version。在保证同一个 <code>id + version</code> 内容不可变的前提下，<code>id + version</code> 足以判断本地是否需要下载更新。<code>sha256</code> 可作为后续完整性校验字段追加。</p>
         </div>
         <div class="qa-item">
           <h3>Q2. 为什么 socket 后仍要走 diff？</h3>
-          <p>
-            socket 是通知通道，不应作为最终状态。FE 收到推送后重新拉取 manifest list，与本地 manifest diff，保证漏消息、重复消息、乱序消息都能通过最终状态收敛。
-          </p>
+          <p>socket 是通知通道，不应作为最终状态。FE 收到推送后重新拉取 manifest list，与本地 manifest diff，保证漏消息、重复消息、乱序消息都能通过最终状态收敛。</p>
         </div>
         <div class="qa-item">
           <h3>Q3. 为什么不在每次发送消息前做 blocking ensure？</h3>
-          <p>
-            Skill 文件同步是用户级状态，不是每轮消息的必需重操作。FE 启动同步和 socket 增量同步可以覆盖常规路径；task 创建时只需要建立 workspace symlink。后续如需要更强一致性，可在本地 manifest 缺失或过期时增加轻量 startup gate。
-          </p>
+          <p>Skill 文件同步是用户级状态，不是每轮消息的必需重操作。FE 启动同步和 socket 增量同步可以覆盖常规路径；task 创建时只需要建立 workspace symlink。后续如需要更强一致性，可在本地 manifest 缺失或过期时增加轻量 startup gate。</p>
         </div>
       </div>
     </section>
@@ -957,9 +854,7 @@
       </div>
     </section>
 
-    <div class="footer">
-      AI Desk Skills Local Materialization Solution
-    </div>
+    <div class="footer">AI Desk Skills Local Materialization Solution</div>
   </main>
 </body>
 </html>
