@@ -67,5 +67,5 @@
 - 新旧 prompt 都能提取 Agent id，用于 runtime context / metadata
 - `get_platform_entities(kind='agent')` 返回 `agentInstructions`
 - Runtime 可按 `agentInstructions` 将 Agent materialize 到 `./.aidesk/agents/<safe-agent-name>/<version>`
-- Materialized Agent definition 保留 legacy `get_agent` 的关键字段，包括 avatar、timestamps、creator、installed、instructions、skills、environment keys、visibility
+- Materialized Agent definition 保留 legacy `get_agent` 的关键字段，包括 timestamps、creator、instructions、skills、environment keys；头像作为 `assets/avatar.png` 物化，不放入 YAML；不返回 installed、visibility 等 AI 不需要的业务状态字段
 - `get_agent` 继续可用于旧 prompt

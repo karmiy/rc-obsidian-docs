@@ -73,6 +73,14 @@ Agent archive 必须提供一个适合 AI 直接阅读、同时保留结构化 m
 AGENT.md
 ```
 
+可选文件：
+
+```text
+assets/avatar.png
+```
+
+当 Agent 有头像时，后端必须把存储的 base64/data URL 头像作为真实图片文件写入 `assets/avatar.png`，不要把头像 base64 放进 `AGENT.md` YAML。
+
 `AGENT.md` 采用 Claude subagent 风格：YAML frontmatter + Markdown body。
 
 frontmatter 应尽量覆盖 legacy `get_agent` payload 的关键字段：
@@ -84,12 +92,9 @@ id: 121a02bf-23a2-43c5-bef8-2fbff033ee6d
 name: Hello agent
 description: say hello
 version: 1.0.0
-visibility: workspace
 creatorExtensionId: "8967481597427794"
 createdAt: "2026-07-07T01:57:25.701689+00:00"
 updatedAt: "2026-07-07T02:15:04.041601+00:00"
-installed: true
-avatarBase64: null
 skills:
   - d5549c86-3673-4b6c-9b5c-6fe9b1b1c229
   - 02e2b0f5-b0dd-4ab0-8246-a473b5b60d9c
@@ -104,9 +109,10 @@ please use [AI Desk @skill "solution-helper": call MCP tool get_platform_entitie
 字段要求：
 
 - 不泄漏 `environment` values，只返回 `environmentKeys`
-- 保留 `avatarBase64`，即使为 `null`
-- 保留 `createdAt`、`updatedAt`、`creatorExtensionId`、`installed`
+- 不返回 `avatarBase64`；有头像时在 archive 中提供 `assets/avatar.png`
+- 保留 `createdAt`、`updatedAt`、`creatorExtensionId`
 - 保留 `skills` 原始列表
+- 不返回 `visibility`、`installed`、`installCount`、`taskDefinitionCount` 等 AI 不需要的业务状态字段
 - Markdown body 保留 `instructions` 原文，里面可能包含 Skill 的 platform entity prompt
 - `AGENT.md` 是 `materialization.entryFile`
 

@@ -1,0 +1,930 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>AI Desk Skills 本地物化与原生发现上线方案</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --paper: #ffffff;
+      --ink: #172033;
+      --muted: #5d6878;
+      --soft: #eef2f6;
+      --line: #d9e0e8;
+      --line-strong: #bdc8d6;
+      --blue: #2463eb;
+      --blue-soft: #e8f0ff;
+      --green: #078669;
+      --green-soft: #e2f6ef;
+      --amber: #a46a12;
+      --amber-soft: #fff3d6;
+      --red: #bf3d2e;
+      --red-soft: #ffefed;
+      --purple: #6354c9;
+      --purple-soft: #eeebff;
+      --shadow: 0 14px 34px rgba(23, 32, 51, 0.07);
+      --radius: 8px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: var(--sans);
+      line-height: 1.55;
+    }
+
+    main {
+      width: min(1160px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 42px 0 72px;
+    }
+
+    header,
+    section {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    header {
+      padding: 36px 40px;
+    }
+
+    section {
+      margin-top: 24px;
+      padding: 30px;
+      box-shadow: 0 10px 24px rgba(23, 32, 51, 0.04);
+    }
+
+    .eyebrow {
+      margin-bottom: 10px;
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      letter-spacing: 0;
+      line-height: 1.22;
+    }
+
+    h1 {
+      font-size: 36px;
+      max-width: 860px;
+    }
+
+    h2 {
+      font-size: 24px;
+      margin-bottom: 18px;
+    }
+
+    h3 {
+      font-size: 17px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .lead {
+      margin-top: 16px;
+      max-width: 930px;
+      font-size: 17px;
+      color: var(--muted);
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 30px;
+      padding: 4px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--soft);
+      color: #465365;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .pill.primary {
+      background: var(--green-soft);
+      border-color: #b8e7d7;
+      color: var(--green);
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcfe;
+      padding: 18px;
+      min-height: 100%;
+    }
+
+    .card.blue {
+      background: var(--blue-soft);
+      border-color: #bfd1ff;
+    }
+
+    .card.green {
+      background: var(--green-soft);
+      border-color: #b8e7d7;
+    }
+
+    .card.amber {
+      background: var(--amber-soft);
+      border-color: #edd08b;
+    }
+
+    .card.red {
+      background: var(--red-soft);
+      border-color: #efbdb5;
+    }
+
+    .card.purple {
+      background: var(--purple-soft);
+      border-color: #c9c2f4;
+    }
+
+    .card p,
+    .card li {
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      margin-bottom: 12px;
+      border-radius: 999px;
+      background: var(--blue);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .callout {
+      margin-top: 16px;
+      padding: 16px;
+      border-left: 4px solid var(--blue);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      background: var(--blue-soft);
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #174ea6;
+    }
+
+    ul,
+    ol {
+      margin: 10px 0 0;
+      padding-left: 20px;
+      color: var(--muted);
+    }
+
+    li + li {
+      margin-top: 6px;
+    }
+
+    code,
+    pre {
+      font-family: var(--mono);
+    }
+
+    code {
+      padding: 2px 5px;
+      border-radius: 5px;
+      background: #eef2f7;
+      color: #243044;
+      font-size: 0.93em;
+    }
+
+    pre {
+      margin: 0;
+      padding: 16px;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #111827;
+      color: #dbeafe;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      padding: 12px 13px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #edf2f7;
+      color: #334155;
+      font-weight: 800;
+    }
+
+    td {
+      color: var(--muted);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .diagram {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcfe;
+      padding: 12px;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      min-width: 920px;
+      height: auto;
+    }
+
+    .box {
+      fill: #fff;
+      stroke: #cbd5e1;
+      stroke-width: 1.2;
+      rx: 8;
+    }
+
+    .box-blue {
+      fill: #e8f0ff;
+      stroke: #a9bfff;
+    }
+
+    .box-green {
+      fill: #e2f6ef;
+      stroke: #9bdcc7;
+    }
+
+    .box-amber {
+      fill: #fff3d6;
+      stroke: #e6c26b;
+    }
+
+    .box-purple {
+      fill: #eeebff;
+      stroke: #c6bff0;
+    }
+
+    .svg-title {
+      font-size: 15px;
+      font-weight: 800;
+      fill: #172033;
+    }
+
+    .svg-text {
+      font-size: 12.5px;
+      fill: #4b5870;
+    }
+
+    .arrow {
+      stroke: #64748b;
+      stroke-width: 1.4;
+      fill: none;
+      marker-end: url(#arrowhead);
+    }
+
+    .qa {
+      display: grid;
+      gap: 14px;
+    }
+
+    .qa-item {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcfe;
+      padding: 16px;
+    }
+
+    .qa-item h3 {
+      margin-bottom: 7px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .status.done {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .status.next {
+      color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .footer {
+      margin-top: 24px;
+      color: #7b8797;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @media (max-width: 920px) {
+      main {
+        width: min(100% - 28px, 1160px);
+        padding-top: 24px;
+      }
+
+      header,
+      section {
+        padding: 22px;
+      }
+
+      h1 {
+        font-size: 29px;
+      }
+
+      .grid-2,
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div class="eyebrow">Production Solution</div>
+      <h1>AI Desk Skills 本地物化与 Runtime 原生发现上线方案</h1>
+      <p class="lead">
+        方案目标是让 AI Desk 已安装 skills 以标准 project skills 的形式被 Codex、Claude Code、Cursor、GitHub Copilot 等 runtime 原生发现和使用。用户不需要通过 slash 显式拼接平台 MCP 指令，runtime 可以在会话初始化后基于 skill name、description 和 skill 内部引用自然触发。
+      </p>
+      <div class="meta">
+        <span class="pill primary">上线方案</span>
+        <span class="pill">更新时间：2026-07-08</span>
+        <span class="pill">Scope：Local runtime task workspace</span>
+        <span class="pill">Core：~/.aidesktop/skills + provider symlinks</span>
+      </div>
+    </header>
+
+    <section>
+      <h2>目标</h2>
+      <div class="grid-3">
+        <div class="card green">
+          <div class="number">1</div>
+          <h3>显式自然语言使用</h3>
+          <p>用户输入“请使用 <code>bug-analysis</code> 这个 skill 帮我分析下...”时，runtime 能识别到本地已安装的 <code>bug-analysis</code> skill，并按该 skill 的说明执行。</p>
+        </div>
+        <div class="card green">
+          <div class="number">2</div>
+          <h3>隐式意图触发</h3>
+          <p>用户输入“帮我分析一下这个 bug”时，runtime 可以基于可见 skill 的 name 和 description，自动选择并使用 <code>bug-analysis</code>。</p>
+        </div>
+        <div class="card green">
+          <div class="number">3</div>
+          <h3>Skill 间自然引用</h3>
+          <p><code>bug-analysis</code> 的说明中提到需要使用 <code>code-review</code> 时，runtime 可以在同一个 project skills inventory 中自然定位并继续使用 <code>code-review</code>。</p>
+        </div>
+      </div>
+      <div class="callout">
+        <strong>目标状态</strong>
+        AI Desk skills 对 runtime 的呈现方式与项目自带标准 skills 一致：启动时可见、自然语言可引用、skill 内部可链式引用、slash 只作为快捷选择入口而不是唯一触发机制。
+      </div>
+    </section>
+
+    <section>
+      <h2>整体方案</h2>
+      <div class="diagram" aria-label="AI Desk skills 本地物化整体方案图">
+        <svg viewBox="0 0 1120 420" role="img">
+          <defs>
+            <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"></polygon>
+            </marker>
+          </defs>
+
+          <rect x="36" y="72" width="210" height="98" class="box box-blue"></rect>
+          <text x="58" y="105" class="svg-title">AI Desk BE</text>
+          <text x="58" y="132" class="svg-text">installed skill manifest</text>
+          <text x="58" y="152" class="svg-text">skill bundle download</text>
+
+          <rect x="316" y="72" width="220" height="98" class="box box-green"></rect>
+          <text x="338" y="105" class="svg-title">FE Sync Coordinator</text>
+          <text x="338" y="132" class="svg-text">diff id + version</text>
+          <text x="338" y="152" class="svg-text">request daemon file ops</text>
+
+          <rect x="606" y="72" width="220" height="98" class="box"></rect>
+          <text x="628" y="105" class="svg-title">Local Daemon</text>
+          <text x="628" y="132" class="svg-text">write stable skill dirs</text>
+          <text x="628" y="152" class="svg-text">create symlink entries</text>
+
+          <rect x="886" y="52" width="206" height="138" class="box box-purple"></rect>
+          <text x="908" y="85" class="svg-title">Global Skill Directory</text>
+          <text x="908" y="112" class="svg-text">~/.aidesktop/skills</text>
+          <text x="908" y="134" class="svg-text">bug-analysis/SKILL.md</text>
+          <text x="908" y="154" class="svg-text">code-review/SKILL.md</text>
+          <text x="908" y="174" class="svg-text">manifest.json</text>
+
+          <rect x="316" y="270" width="220" height="84" class="box box-amber"></rect>
+          <text x="338" y="302" class="svg-title">Task Workspace</text>
+          <text x="338" y="329" class="svg-text">workspace-xxxx/</text>
+          <text x="338" y="349" class="svg-text">contains selected projects</text>
+
+          <rect x="606" y="248" width="220" height="128" class="box box-amber"></rect>
+          <text x="628" y="280" class="svg-title">Provider Skill Entrypoints</text>
+          <text x="628" y="307" class="svg-text">.codex/skills</text>
+          <text x="628" y="327" class="svg-text">.claude/skills</text>
+          <text x="628" y="347" class="svg-text">.cursor/skills</text>
+          <text x="628" y="367" class="svg-text">.github/skills</text>
+
+          <rect x="886" y="270" width="206" height="84" class="box box-green"></rect>
+          <text x="908" y="302" class="svg-title">Runtime Native Discovery</text>
+          <text x="908" y="329" class="svg-text">skill inventory at session init</text>
+          <text x="908" y="349" class="svg-text">natural language trigger</text>
+
+          <path d="M246 121 L316 121" class="arrow"></path>
+          <path d="M536 121 L606 121" class="arrow"></path>
+          <path d="M826 121 L886 121" class="arrow"></path>
+          <path d="M989 190 C982 226 982 246 989 270" class="arrow"></path>
+          <path d="M536 312 L606 312" class="arrow"></path>
+          <path d="M826 312 L886 312" class="arrow"></path>
+        </svg>
+      </div>
+      <div class="callout">
+        <strong>核心设计</strong>
+        用户已安装 skills 统一物化到 <code>~/.aidesktop/skills</code>；每个 task workspace 只创建 runtime 专属入口目录，并通过 symlink 指向该全局目录。runtime 从自己的原生 project skills 入口加载 AI Desk skills。
+      </div>
+    </section>
+
+    <section>
+      <h2>模块一：Skill 管理与本地暴露</h2>
+
+      <div class="grid-2">
+        <div>
+          <h3>用户全局目录</h3>
+          <pre>~/.aidesktop/skills/
+  manifest.json
+  bug-analysis/
+    SKILL.md
+    references/
+    scripts/
+    assets/
+  code-review/
+    SKILL.md
+  jira-actions/
+    SKILL.md</pre>
+        </div>
+        <div>
+          <h3>Task workspace 目录</h3>
+          <pre>workspace-7f3a9/
+  .codex/skills  -> ~/.aidesktop/skills
+  .claude/skills -> ~/.aidesktop/skills
+  .cursor/skills -> ~/.aidesktop/skills
+  .github/skills -> ~/.aidesktop/skills
+  Fiji/
+    ...project files...</pre>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>路径原则</strong>
+        <code>~/.aidesktop/skills/{skillName}/SKILL.md</code> 是 runtime 可见的稳定路径。版本更新时替换该稳定路径下的文件内容，不通过切换 symlink target 暴露版本目录。同名 skill 的处理方式见文末“待讨论问题”。
+      </div>
+
+      <h3 style="margin-top: 22px;">本地目录规则</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>规则</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>稳定目录</td>
+            <td>每个 installed skill 在 <code>~/.aidesktop/skills</code> 下对应一个稳定目录。runtime 读取的是该稳定目录，不读取版本目录。</td>
+          </tr>
+          <tr>
+            <td>不直接写入业务 repo</td>
+            <td>AI Desk task 会创建外层 <code>workspace-xxxx</code>，provider skills 入口放在该外层目录，不写入用户选择的 <code>Fiji/</code> 等业务项目目录。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top: 22px;">Task 创建时的 workspace 准备</h3>
+      <ol>
+        <li>AI Desk 创建 task workspace，例如 <code>workspace-7f3a9/</code>。</li>
+        <li>将用户选择的项目放入 workspace，例如 <code>workspace-7f3a9/Fiji/</code>。</li>
+        <li>在 workspace 外层创建四个 provider skills 入口：<code>.codex/skills</code>、<code>.claude/skills</code>、<code>.cursor/skills</code>、<code>.github/skills</code>。</li>
+        <li>四个入口均 symlink 到 <code>~/.aidesktop/skills</code>。</li>
+        <li>runtime 以 <code>workspace-7f3a9</code> 作为可发现 skills 的工作目录启动。</li>
+      </ol>
+    </section>
+
+    <section>
+      <h2>模块一 Q&amp;A</h2>
+      <div class="qa">
+        <div class="qa-item">
+          <h3>Q1. 为什么 symlink 方案可行？</h3>
+          <p>
+            Codex、Claude Code、Cursor、GitHub Copilot 均可以从各自 project skills 目录加载 symlink 指向的外部 skills。也就是说，AI Desk 不需要把所有 skill 文件复制到每个 task workspace，只要在 workspace 下提供 runtime 原生入口即可。
+          </p>
+        </div>
+        <div class="qa-item">
+          <h3>Q2. 为什么不只创建 <code>.agents/skills</code>？</h3>
+          <p>
+            各 runtime 对 project skills 入口目录的支持不完全一致，其中 Claude Code 不支持从 <code>.agents/skills</code> 加载 project skills。为了覆盖 Codex、Claude Code、Cursor、GitHub Copilot，需要分别创建 <code>.codex/skills</code>、<code>.claude/skills</code>、<code>.cursor/skills</code>、<code>.github/skills</code>。
+          </p>
+        </div>
+        <div class="qa-item">
+          <h3>Q3. 为什么不使用 <code>~/.aidesktop/skills/bug-analysis/1.0.0</code> 这种版本目录作为 runtime 可见路径？</h3>
+          <p>
+            runtime 在同一 session 中可能缓存已使用 skill 的 realpath。若 <code>bug-analysis</code> 从 <code>1.0.0</code> symlink 切到 <code>1.1.0</code>，Codex 仍可能继续读取旧版本目录。稳定路径原地替换可以避免该问题，因此版本号应记录在 manifest 中，而不是出现在 runtime 可见路径中。
+          </p>
+        </div>
+        <div class="qa-item">
+          <h3>Q4. 为什么优先保持目录名和 <code>SKILL.md name</code> 一致？</h3>
+          <p>
+            不同 runtime 对 skill 可调用 ID 的理解不同：有的更看重目录名，有的更看重 frontmatter name。无同名冲突时保持二者一致，可以让用户自然语言提到 skill name、skill 内部引用其他 skill、runtime 展示 skill 列表时都使用同一个名称。同名冲突场景需要单独决策，见文末“待讨论问题”。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>模块二：Sync 方案</h2>
+      <div class="diagram" aria-label="AI Desk skill sync 流程图">
+        <svg viewBox="0 0 1120 500" role="img">
+          <defs>
+            <marker id="arrowhead-sync" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#64748b"></polygon>
+            </marker>
+          </defs>
+          <style>
+            .arrow-sync { stroke: #64748b; stroke-width: 1.4; fill: none; marker-end: url(#arrowhead-sync); }
+            .edge-label { font-size: 11.5px; fill: #64748b; font-weight: 700; }
+          </style>
+
+          <rect x="34" y="54" width="196" height="78" class="box box-blue"></rect>
+          <text x="56" y="86" class="svg-title">AI Desk App 启动</text>
+          <text x="56" y="112" class="svg-text">start local skill sync</text>
+
+          <rect x="306" y="54" width="222" height="78" class="box"></rect>
+          <text x="328" y="86" class="svg-title">服务端已安装清单</text>
+          <text x="328" y="112" class="svg-text">id, name, version</text>
+
+          <rect x="604" y="54" width="222" height="78" class="box"></rect>
+          <text x="626" y="86" class="svg-title">本机已物化清单</text>
+          <text x="626" y="112" class="svg-text">~/.aidesktop/skills/manifest.json</text>
+
+          <rect x="890" y="54" width="196" height="78" class="box box-green"></rect>
+          <text x="912" y="86" class="svg-title">计算差异</text>
+          <text x="912" y="112" class="svg-text">新增 / 更新 / 删除</text>
+
+          <rect x="306" y="196" width="222" height="78" class="box"></rect>
+          <text x="328" y="228" class="svg-title">下载变化的 Skills</text>
+          <text x="328" y="254" class="svg-text">only changed ids</text>
+
+          <rect x="604" y="196" width="222" height="78" class="box box-green"></rect>
+          <text x="626" y="228" class="svg-title">写入稳定目录</text>
+          <text x="626" y="254" class="svg-text">~/.aidesktop/skills/{name}</text>
+
+          <rect x="890" y="196" width="196" height="78" class="box box-purple"></rect>
+          <text x="912" y="228" class="svg-title">提交本地 Manifest</text>
+          <text x="912" y="254" class="svg-text">mark sync complete</text>
+
+          <rect x="34" y="354" width="196" height="78" class="box box-blue"></rect>
+          <text x="56" y="386" class="svg-title">Skill 更新推送</text>
+          <text x="56" y="412" class="svg-text">install / update / uninstall</text>
+
+          <rect x="306" y="354" width="222" height="78" class="box box-amber"></rect>
+          <text x="328" y="386" class="svg-title">Task Workspace 创建</text>
+          <text x="328" y="412" class="svg-text">workspace-xxxx ready</text>
+
+          <rect x="604" y="354" width="222" height="78" class="box box-amber"></rect>
+          <text x="626" y="386" class="svg-title">创建 Runtime 入口</text>
+          <text x="626" y="412" class="svg-text">4 provider skills symlinks</text>
+
+          <rect x="890" y="354" width="196" height="78" class="box box-green"></rect>
+          <text x="912" y="386" class="svg-title">Runtime 启动</text>
+          <text x="912" y="412" class="svg-text">native skills loaded</text>
+
+          <path d="M230 93 L306 93" class="arrow-sync"></path>
+          <text x="252" y="82" class="edge-label">拉取</text>
+          <path d="M528 93 L604 93" class="arrow-sync"></path>
+          <text x="548" y="82" class="edge-label">读取本机状态</text>
+          <path d="M826 93 L890 93" class="arrow-sync"></path>
+          <text x="842" y="82" class="edge-label">对比</text>
+          <path d="M988 132 C982 166 580 170 528 216" class="arrow-sync"></path>
+          <text x="690" y="164" class="edge-label">只处理差异项</text>
+          <path d="M528 235 L604 235" class="arrow-sync"></path>
+          <text x="548" y="224" class="edge-label">交给 daemon 写入</text>
+          <path d="M826 235 L890 235" class="arrow-sync"></path>
+          <text x="846" y="224" class="edge-label">完成后提交</text>
+          <path d="M230 393 C260 342 826 318 988 274" class="arrow-sync"></path>
+          <text x="374" y="338" class="edge-label">收到推送后重新拉取清单并 diff</text>
+          <path d="M528 393 L604 393" class="arrow-sync"></path>
+          <text x="548" y="382" class="edge-label">创建链接</text>
+          <path d="M826 393 L890 393" class="arrow-sync"></path>
+          <text x="846" y="382" class="edge-label">启动</text>
+        </svg>
+      </div>
+
+      <h3 style="margin-top: 22px;">同步触发点</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>触发点</th>
+            <th>动作</th>
+            <th>结果</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>FE 启动</td>
+            <td>调用 BE 接口获取“用户已安装 Skill 清单”；通过 daemon 读取本机已物化清单；对比出新增、升级、删除。</td>
+            <td>本地 <code>~/.aidesktop/skills</code> 在应用启动后快速收敛到服务端状态。</td>
+          </tr>
+          <tr>
+            <td>BE socket 推送</td>
+            <td>收到 skill install、uninstall、version changed 事件后，复用 diff update 流程。</td>
+            <td>用户在 AI Desk 更新 skill 后，本地目录自动更新。</td>
+          </tr>
+          <tr>
+            <td>Task 创建</td>
+            <td>workspace 创建完成后，创建四个 provider skills symlink，指向 <code>~/.aidesktop/skills</code>。</td>
+            <td>新 runtime session 启动时通过原生机制加载 skills。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top: 22px;">BE 接口</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>接口</th>
+            <th>返回或行为</th>
+            <th>说明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>A. 获取用户已安装 Skill 清单</td>
+            <td><code>Array&lt;{ id, name, version }&gt;</code>，可扩展 <code>updatedAt</code>、<code>sha256</code>。</td>
+            <td><code>id + version</code> 是 diff 的最小依据；前提是同一个 <code>id + version</code> 内容不可变。</td>
+          </tr>
+          <tr>
+            <td>B. 下载指定 ids 的 skill bundles</td>
+            <td>返回完整文件树：<code>SKILL.md</code>、references、scripts、assets。</td>
+            <td>FE 只请求 diff 后需要新增或更新的 ids，避免全量下载。</td>
+          </tr>
+          <tr>
+            <td>C. Skill version socket</td>
+            <td>推送 skill install、uninstall、version changed。</td>
+            <td>socket 只负责通知；最终状态仍通过 API A + local manifest diff 收敛。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top: 22px;">本地 manifest</h3>
+      <pre>{
+  "schemaVersion": 1,
+  "updatedAt": "2026-07-08T00:00:00Z",
+  "skills": [
+    {
+      "id": "6f2a9c1e-...",
+      "name": "bug-analysis",
+      "version": "1.3.0",
+      "path": "bug-analysis"
+    },
+    {
+      "id": "2aa8b713-...",
+      "name": "code-review",
+      "version": "2.1.0",
+      "path": "code-review"
+    }
+  ]
+}</pre>
+    </section>
+
+    <section>
+      <h2>模块二 Q&amp;A</h2>
+      <div class="qa">
+        <div class="qa-item">
+          <h3>Q1. 为什么用 <code>id + version</code> 做 diff？</h3>
+          <p>
+            Skill 有服务端版本语义，且更新会自动变更 version。在保证同一个 <code>id + version</code> 内容不可变的前提下，<code>id + version</code> 足以判断本地是否需要下载更新。<code>sha256</code> 可作为后续完整性校验字段追加。
+          </p>
+        </div>
+        <div class="qa-item">
+          <h3>Q2. 为什么 socket 后仍要走 diff？</h3>
+          <p>
+            socket 是通知通道，不应作为最终状态。FE 收到推送后重新拉取 manifest list，与本地 manifest diff，保证漏消息、重复消息、乱序消息都能通过最终状态收敛。
+          </p>
+        </div>
+        <div class="qa-item">
+          <h3>Q3. 为什么不在每次发送消息前做 blocking ensure？</h3>
+          <p>
+            Skill 文件同步是用户级状态，不是每轮消息的必需重操作。FE 启动同步和 socket 增量同步可以覆盖常规路径；task 创建时只需要建立 workspace symlink。后续如需要更强一致性，可在本地 manifest 缺失或过期时增加轻量 startup gate。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>职责边界</h2>
+      <div class="grid-3">
+        <div class="card blue">
+          <h3>BE</h3>
+          <ul>
+            <li>维护 skill install、权限、版本、文件内容。</li>
+            <li>提供 manifest list、bundle download、socket notification。</li>
+            <li>保证 <code>id + version</code> 内容不可变，提供本地同步所需的最终状态。</li>
+          </ul>
+        </div>
+        <div class="card green">
+          <h3>FE</h3>
+          <ul>
+            <li>作为 sync coordinator，执行 startup diff 与 socket-triggered diff。</li>
+            <li>调用 daemon 文件能力写入 <code>~/.aidesktop/skills</code>。</li>
+            <li>task workspace 创建后建立 provider skills symlinks。</li>
+          </ul>
+        </div>
+        <div class="card amber">
+          <h3>Daemon</h3>
+          <ul>
+            <li>只提供通用文件系统能力：stat、read、write、rename、symlink。</li>
+            <li>运行 runtime CLI 并保持统一 stream 事件输出。</li>
+            <li>不访问 BE，不读取 DB，不理解 AI Desk skill 业务模型。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>上线实现拆解</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>模块</th>
+            <th>工作项</th>
+            <th>验收点</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="status done">Skill Manifest</span></td>
+            <td>BE 提供用户 installed skills manifest list，支持 <code>id</code>、<code>name</code>、<code>version</code>。</td>
+            <td>FE 可以通过 <code>id + version</code> 和本地 manifest 判断需要下载、更新、删除的 skills。</td>
+          </tr>
+          <tr>
+            <td><span class="status done">Bundle Download</span></td>
+            <td>BE 支持按 ids 下载完整 skill 文件树。</td>
+            <td>FE 可以只下载 diff 后变化的 skills。</td>
+          </tr>
+          <tr>
+            <td><span class="status done">Local Materialization</span></td>
+            <td>FE 调 daemon 将 skill 文件写入 <code>~/.aidesktop/skills/{skillName}</code>，并维护本地 manifest。</td>
+            <td>本地目录结构符合标准 skill 目录；同名冲突策略作为待讨论问题单独决策。</td>
+          </tr>
+          <tr>
+            <td><span class="status done">Workspace Symlinks</span></td>
+            <td>task 创建 workspace 后建立四个 provider skills symlinks。</td>
+            <td>四个 runtime 新 session 均可发现 AI Desk installed skills。</td>
+          </tr>
+          <tr>
+            <td><span class="status next">SlashPrompt Update</span></td>
+            <td>slash 选择 skill 后不再拼 MCP 获取指令，而是以 runtime 原生 skill name 作为快捷引用。</td>
+            <td>slash 与自然语言路径共享同一套 runtime-visible skills。</td>
+          </tr>
+          <tr>
+            <td><span class="status next">Observability</span></td>
+            <td>记录 manifest diff、download count、write result、symlink result、skill name conflict。</td>
+            <td>上线后可以定位本地同步失败、workspace symlink 缺失和 runtime 未发现 skill 的问题。</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>待讨论问题：同名 Skill 与 Runtime 可见名称</h2>
+      <p>
+        当前方案的主路径假设用户 installed skills 中不存在 runtime 可见名称冲突。生产环境中可能已经存在同名 skill，因此同名策略需要在上线前作为产品与工程共同决策项确认。
+      </p>
+
+      <div class="grid-2" style="margin-top: 18px;">
+        <div class="card amber">
+          <h3>方案 A：AI Desk 限制同名</h3>
+          <p>
+            同一个用户的 installed skills 中，不允许两个 skill 以相同 name 同时暴露给 runtime。安装或启用第二个同名 skill 时，由 AI Desk 提示用户替换、取消或重命名。
+          </p>
+          <ul>
+            <li>优点：runtime 可见名称与用户认知完全一致。</li>
+            <li>优点：用户说 <code>bug-analysis</code> 时，runtime inventory 中也正好是 <code>bug-analysis</code>。</li>
+            <li>风险：如果生产数据中已经存在同名 installed skills，需要迁移或兼容处理。</li>
+          </ul>
+        </div>
+
+        <div class="card red">
+          <h3>方案 B：文件夹名和 skill name 加 id 后缀</h3>
+          <p>
+            同名冲突时，将冲突 skill 物化为带后缀的 runtime 名称，例如 <code>bug-analysis-6f2a9c1e</code>，并同步修改物化后的 <code>SKILL.md name</code>。
+          </p>
+          <ul>
+            <li>优点：不阻断已有同名 skill 同时安装。</li>
+            <li>优点：可以规避 Copilot 按 <code>SKILL.md name</code> 去重的问题。</li>
+            <li>风险：用户可能看到 runtime 输出“使用 <code>bug-analysis-6f2a9c1e</code> skill”。</li>
+            <li>风险：用户自然语言说“使用 <code>bug-analysis</code>”时，runtime 可能找不到实际暴露的 <code>bug-analysis-6f2a9c1e</code>，除非 description 或额外别名说明足够清楚。</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>建议决策方向</strong>
+        优先评估生产数据中同名 installed skills 的真实规模。如果同名很少，方案 A 更符合标准 skill 体验；如果同名已经普遍存在，需要采用方案 B，并额外设计 UI 提示和 runtime alias 说明，避免用户自然语言引用失败。
+      </div>
+    </section>
+
+    <section>
+      <h2>上线验收标准</h2>
+      <div class="grid-2">
+        <div class="card green">
+          <h3>用户行为验收</h3>
+          <ul>
+            <li>用户输入“请使用 bug-analysis skill...”时，runtime 使用 <code>bug-analysis</code>。</li>
+            <li>用户输入“帮我分析一下这个 bug”时，runtime 能基于可见 skill 自主选择 <code>bug-analysis</code>。</li>
+            <li><code>bug-analysis</code> 内部引用 <code>code-review</code> 时，runtime 能继续定位并使用 <code>code-review</code>。</li>
+            <li>用户通过 slash 选择 skill 时，行为与自然语言使用同一套本地物化 skill。</li>
+          </ul>
+        </div>
+        <div class="card blue">
+          <h3>工程行为验收</h3>
+          <ul>
+            <li><code>~/.aidesktop/skills</code> 中存在稳定 skill 目录和 manifest。</li>
+            <li>task workspace 外层存在四个 provider skills symlinks。</li>
+            <li>版本更新后稳定路径文件内容更新，不出现 runtime-visible version directory symlink 切换。</li>
+            <li>daemon 不包含 AI Desk skill 业务逻辑，只执行通用文件操作。</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="footer">
+      AI Desk Skills Local Materialization Solution
+    </div>
+  </main>
+</body>
+</html>
