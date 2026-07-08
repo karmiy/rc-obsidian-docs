@@ -555,6 +555,34 @@ AGENTS 读取证据存在差异：
 | Cursor | 有 AGENTS 组明确列出 `AGENTS.md` 并按其说明处理 symlink |
 | Copilot | 有 AGENTS 组能看到 `AGENTS.md` 文件存在，但本次事件不足以证明其显式消费了 AGENTS 内容 |
 
+### 无 AGENTS 多轮复测
+
+由于存在历史反馈称“无 AGENTS.md 时，某些 CLI 曾把项目判断为空目录”，对无 `AGENTS.md` 场景追加 3 轮复测。每轮均创建新的 workspace、新的 `FIJI` symlink，并为四个 CLI 启动新的 ACP session。
+
+复测范围：
+
+| 轮次 | workspace | AGENTS.md |
+|---|---|---|
+| 原始轮次 | `/Users/karmiy.hong/.aidesktop/workspace-exp9-workspace-symlink-2026-07-08T00-20-00` | 无 |
+| 复测 1 | `/Users/karmiy.hong/.aidesktop/workspace-exp9-repeat-noagents-r1-2026-07-08T10-02-52` | 无 |
+| 复测 2 | `/Users/karmiy.hong/.aidesktop/workspace-exp9-repeat-noagents-r2-2026-07-08T10-06-49` | 无 |
+| 复测 3 | `/Users/karmiy.hong/.aidesktop/workspace-exp9-repeat-noagents-r3-2026-07-08T10-10-40` | 无 |
+
+汇总结果：
+
+| CLI | 无 AGENTS 总轮次 | 读到真实 Fiji 项目 | 真正误判为空目录 | 备注 |
+|---|---:|---:|---:|---|
+| Codex | 4 | 4 | 0 | 复测 3 轮中均先指出 workspace 根目录只有一个 symlink / 空壳工作区，但随后继续跟随 symlink 并正确识别 Fiji 架构；不属于最终误判为空目录 |
+| Claude Code | 4 | 4 | 0 | 每轮均明确说明 `FIJI` symlink 指向真实路径，并能访问源码 |
+| Cursor | 4 | 4 | 0 | 每轮均明确说明可通过 symlink 访问完整 Fiji 源码 |
+| Copilot | 4 | 4 | 0 | 每轮均说明能看到 Fiji 源码，并给出 monorepo / 微前端架构判断 |
+
+复测结论：
+
+- 本机当前环境下，4 轮无 `AGENTS.md` 测试均未复现“CLI 把项目最终判断为空目录”的问题。
+- Codex 会更谨慎地描述“当前 workspace 根目录只有一个 symlink / 不是 git 仓库 / 像空壳工作区”，但它随后会继续检查 `FIJI/` symlink 目标并识别真实项目。
+- 如果业务上希望避免模型停留在“当前目录是空壳”这个中间判断，父目录 `AGENTS.md` 仍有价值：它能显式告诉 CLI 把 `FIJI` 当作项目根目录并跟随 symlink。
+
 ### 实验结论
 
 当前测试条件下，四个 CLI 都能处理“workspace 根目录只包含项目 symlink”的形态，并能沿 `FIJI` symlink 进入真实 Fiji 项目。`AGENTS.md` 可作为额外保险和人类可读说明，但在本样板中不是让 CLI 读到项目源码的必要条件。
@@ -564,6 +592,9 @@ AGENTS 读取证据存在差异：
 | 类型 | 日志 |
 |---|---|
 | 汇总 | `/Users/karmiy.hong/Documents/Codex/2026-07-07/bug-codex-claude-skill-skill/work/acp-exp9/summary-exp9-workspace-symlink-2026-07-08T00-20-00.json` |
+| 无 AGENTS 复测 1 | `/Users/karmiy.hong/Documents/Codex/2026-07-07/bug-codex-claude-skill-skill/work/acp-exp9/summary-exp9-repeat-noagents-r1-2026-07-08T10-02-52.json` |
+| 无 AGENTS 复测 2 | `/Users/karmiy.hong/Documents/Codex/2026-07-07/bug-codex-claude-skill-skill/work/acp-exp9/summary-exp9-repeat-noagents-r2-2026-07-08T10-06-49.json` |
+| 无 AGENTS 复测 3 | `/Users/karmiy.hong/Documents/Codex/2026-07-07/bug-codex-claude-skill-skill/work/acp-exp9/summary-exp9-repeat-noagents-r3-2026-07-08T10-10-40.json` |
 | 原始事件 | `/Users/karmiy.hong/Documents/Codex/2026-07-07/bug-codex-claude-skill-skill/work/acp-exp9/` |
 
 ## 12. 最终建议
