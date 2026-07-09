@@ -463,13 +463,13 @@
   .cursor/skills -> ~/.aidesktop/skills
   .github/skills -> ~/.aidesktop/skills
   Fiji/
-    ...worktree files or project symlink...</pre>
+    ...project files...</pre>
         </div>
       </div>
 
       <div class="callout">
         <strong>路径原则</strong>
-        <code>~/.aidesktop/skills/{skillName}/SKILL.md</code> 是 runtime 可见的稳定路径。版本更新时替换该稳定路径下的文件内容，不通过切换 symlink target 暴露版本目录。同名 skill 不建议通过路径或 name 后缀规避，应在安装或启用策略中避免同时暴露给 runtime。
+        <code>~/.aidesktop/skills/{skillName}/SKILL.md</code> 是 runtime 可见的稳定路径，其中 <code>skillName</code> 使用 BE 返回的 skill name。版本更新时替换该稳定路径下的文件内容，不通过切换 symlink target 暴露版本目录。同名 skill 不建议通过路径或 name 后缀规避，应在安装或启用策略中避免同时暴露给 runtime。
       </div>
 
       <h3 style="margin-top: 22px;">本地目录规则</h3>
@@ -518,8 +518,8 @@
           <p>runtime 在同一 session 中可能缓存已使用 skill 的 realpath。若 <code>bug-analysis</code> 从 <code>1.0.0</code> symlink 切到 <code>1.1.0</code>，Codex 仍可能继续读取旧版本目录。稳定路径原地替换可以避免该问题，因此版本号应记录在 manifest 中，而不是出现在 runtime 可见路径中。</p>
         </div>
         <div class="qa-item">
-          <h3>Q4. 为什么优先保持目录名和 <code>SKILL.md name</code> 一致？</h3>
-          <p>不同 runtime 对 skill 可调用 ID 的理解不同：有的更看重目录名，有的更看重 frontmatter name。保持二者一致，可以让用户自然语言提到 skill name、skill 内部引用其他 skill、runtime 展示 skill 列表时都使用同一个名称。</p>
+          <h3>Q4. 为什么 import 阶段尽量保持目录名和 <code>SKILL.md name</code> 一致？</h3>
+          <p>不同 runtime 对 skill 可调用 ID 的理解不同：有的更看重目录名，有的更看重 frontmatter name。保持二者一致，可以让用户自然语言提到 skill name、skill 内部引用其他 skill、runtime 展示 skill 列表时都使用同一个名称。Local materialization 阶段不额外解析或重写 <code>SKILL.md</code> YAML；如果存量数据中两者不一致，仍以 BE skill name 作为目录名，并原样写入 bundle 中的 <code>SKILL.md</code>。</p>
         </div>
         <div class="qa-item">
           <h3>Q5. 为什么不建议在文件夹名或 skill name 后拼 id？</h3>
@@ -685,70 +685,6 @@
     </section>
 
     <section>
-      <h2>模块三：无 Worktree Task 的 Workspace 包装目录</h2>
-      <p>
-        当 task 创建时不使用 worktree，且用户选择的是已有本地项目目录，例如 <code>FIJI</code>，AI Desk 仍然需要创建一个自己管理的 workspace 外壳目录。真实项目通过子目录 symlink 暴露给 runtime，四个 provider skills 入口只创建在 workspace 外壳层，避免污染用户真实项目。
-      </p>
-
-      <div class="grid-2" style="margin-top: 18px;">
-        <div>
-          <h3>真实项目目录</h3>
-          <pre>/Users/karmiy.hong/Documents/Projects-stage-2/FIJI/
-  package.json
-  src/
-  ...real project files...</pre>
-        </div>
-        <div>
-          <h3>AI Desk workspace 外壳</h3>
-          <pre>~/.aidesktop/workspace-7f3a9/
-  .codex/skills  -> ~/.aidesktop/skills
-  .claude/skills -> ~/.aidesktop/skills
-  .cursor/skills -> ~/.aidesktop/skills
-  .github/skills -> ~/.aidesktop/skills
-  FIJI -> /Users/karmiy.hong/Documents/Projects-stage-2/FIJI</pre>
-        </div>
-      </div>
-
-      <div class="callout">
-        <strong>关键约束</strong>
-        runtime cwd 使用 <code>~/.aidesktop/workspace-7f3a9</code>，而不是用户真实项目目录。这样 runtime 能在 workspace 外层发现 <code>.codex/skills</code>、<code>.claude/skills</code>、<code>.cursor/skills</code>、<code>.github/skills</code>，同时所有新增 runtime 入口都不会写进真实 <code>FIJI</code> 项目。
-      </div>
-
-      <h3 style="margin-top: 22px;">创建流程</h3>
-      <ol>
-        <li>Task 创建时分配 workspace id，例如 <code>workspace-7f3a9</code>。</li>
-        <li>在 <code>~/.aidesktop/</code> 下创建 <code>workspace-7f3a9/</code>。</li>
-        <li>在 workspace 外层创建四个 provider skills symlink，统一指向 <code>~/.aidesktop/skills</code>。</li>
-        <li>为用户选择的真实项目创建子目录 symlink，例如 <code>workspace-7f3a9/FIJI -> /真实路径/FIJI</code>。</li>
-        <li>runtime 从 workspace 外层启动；需要访问代码时进入 <code>FIJI/</code> 子目录。</li>
-      </ol>
-
-      <h3 style="margin-top: 22px;">为什么需要该包装目录</h3>
-      <table>
-        <thead>
-          <tr>
-            <th>问题</th>
-            <th>处理方式</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>不使用 worktree 时，真实项目目录本身没有 AI Desk 管理的外层。</td>
-            <td>创建 <code>~/.aidesktop/workspace-xxxx</code> 作为 AI Desk-owned runtime cwd。</td>
-          </tr>
-          <tr>
-            <td>如果直接在真实项目下创建 <code>.codex/skills</code> 等目录，会污染用户项目。</td>
-            <td>四个 provider skills 入口只创建在 workspace 外层；真实项目只作为子目录 symlink 出现。</td>
-          </tr>
-          <tr>
-            <td>runtime 需要同时看到 skills 和代码。</td>
-            <td>workspace 外层提供 skills 入口；项目子目录 symlink 提供代码访问。</td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section>
       <h2>职责边界</h2>
       <div class="grid-3">
         <div class="card blue">
@@ -802,17 +738,12 @@
           <tr>
             <td><span class="status done">Local Materialization</span></td>
             <td>FE 调 daemon 将 skill 文件写入 <code>~/.aidesktop/skills/{skillName}</code>，并维护本地 manifest。</td>
-            <td>本地目录结构符合标准 skill 目录，目录名与 <code>SKILL.md name</code> 保持一致。</td>
+            <td>本地目录结构符合标准 skill 目录，目录名使用 BE skill name，<code>SKILL.md</code> 按 bundle 原样写入。</td>
           </tr>
           <tr>
             <td><span class="status done">Workspace Symlinks</span></td>
             <td>task 创建 workspace 后建立四个 provider skills symlinks。</td>
             <td>四个 runtime 新 session 均可发现 AI Desk installed skills。</td>
-          </tr>
-          <tr>
-            <td><span class="status done">No-worktree Workspace Wrapper</span></td>
-            <td>不使用 worktree 的 task 也创建 <code>~/.aidesktop/workspace-xxxx</code>，并将真实项目作为子目录 symlink 放入。</td>
-            <td>provider skills 入口只存在于 AI Desk workspace 外层，不污染用户真实项目目录。</td>
           </tr>
           <tr>
             <td><span class="status next">SlashPrompt Update</span></td>
@@ -845,7 +776,6 @@
           <ul>
             <li><code>~/.aidesktop/skills</code> 中存在稳定 skill 目录和 manifest。</li>
             <li>task workspace 外层存在四个 provider skills symlinks。</li>
-            <li>不使用 worktree 的 task 仍创建 <code>~/.aidesktop/workspace-xxxx</code> 外壳，真实项目以子目录 symlink 接入。</li>
             <li>真实项目目录下不会新增 <code>.codex/skills</code>、<code>.claude/skills</code>、<code>.cursor/skills</code>、<code>.github/skills</code>。</li>
             <li>版本更新后稳定路径文件内容更新，不出现 runtime-visible version directory symlink 切换。</li>
             <li>daemon 不包含 AI Desk skill 业务逻辑，只执行通用文件操作。</li>
