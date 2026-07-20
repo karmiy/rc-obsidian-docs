@@ -199,12 +199,20 @@ Custom 通过扩展 `triggerConfig` JSON，不新增 DB column。
 - calculate next fire time
 - register/update Temporal schedule
 - Temporal callback 时按 `interval + anchorDate` 做 due check
+- 不维护“第几次触发”的计数；用当前日期和 `anchorDate` 计算周期，避免重启、retry、漏触发导致周期错乱
 
 建议实现：
 
 - Temporal 负责按候选 calendar time 触发。
 - AI Desk 后端判断这次是否符合 custom interval。
 - 符合才创建 schedule run/task。
+
+Weekly custom due check:
+
+```ts
+weeksSinceAnchor = currentWeekStart(timezone) - anchorWeekStart(anchorDate, timezone)
+shouldRun = weeksSinceAnchor % interval === 0
+```
 
 ## Frontend Mapping
 
