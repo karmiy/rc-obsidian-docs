@@ -20,6 +20,15 @@ Design mock:
 - previous runs 跳转 free chat task
 - save dirty patch
 
+## Implementation Approach
+
+- 新建 Scheduler page 组件实现新版 UI。
+- 旧 Scheduler page/component 先保留，标记 deprecated。
+- 不在旧组件上做大规模重写。
+- 一次性完成本 spec 的 UI 和功能闭环，不拆阶段。
+- 后端优先复用现有接口；不兼容处只补薄接口/薄字段。
+- 不加 DB migration；现有 JSON 字段够用。
+
 ## UI Rule
 
 UI 不重新定义。以设计稿为准。
