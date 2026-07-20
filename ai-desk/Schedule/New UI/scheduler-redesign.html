@@ -966,6 +966,24 @@
       font-weight: 500;
     }
 
+    .everyInput {
+      width: 34px;
+      height: 28px;
+      border: 0;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--ui-text);
+      font-size: var(--font-sm);
+      font-weight: 600;
+      text-align: right;
+      outline: none;
+    }
+
+    .everyInput:focus {
+      background: var(--ui-surface-subtle);
+      box-shadow: inset 0 0 0 1px var(--ui-border);
+    }
+
     .previousRuns {
       display: grid;
       gap: 8px;
@@ -1456,6 +1474,8 @@
         at: "9:00 AM",
         weekday: "Monday",
         customDay: "Mo",
+        customDays: ["Mo"],
+        every: 1,
         repeats: "Weekly",
         notification: "All runs",
         runs: [
@@ -1476,6 +1496,8 @@
         at: "9:00 AM",
         weekday: "Monday",
         customDay: "Mo",
+        customDays: ["Mo"],
+        every: 1,
         repeats: "Weekly",
         notification: "All runs",
         runs: [
@@ -1497,6 +1519,8 @@
         at: "11:31 AM",
         weekday: "Monday",
         customDay: "Mo",
+        customDays: ["Mo"],
+        every: 1,
         repeats: "Weekly",
         notification: "All runs",
         runs: []
@@ -1515,6 +1539,8 @@
         at: "4:00 PM",
         weekday: "Monday",
         customDay: "Mo",
+        customDays: ["Mo"],
+        every: 1,
         repeats: "Weekly",
         notification: "All runs",
         runs: [
@@ -1743,6 +1769,11 @@
     }
 
     function renderFrequencyRows(item) {
+      const customDays = Array.isArray(item.customDays)
+        ? item.customDays
+        : item.customDay
+          ? [item.customDay]
+          : ["Mo"];
       const rows = [
         fieldRow("Repeat", "repeat", item.repeat)
       ];
@@ -1756,14 +1787,17 @@
       } else {
         rows.push(fieldRow("Repeats", "repeats", item.repeats || "Weekly"));
         const unit = { Daily: "day", Weekly: "week", Monthly: "month" }[item.repeats || "Weekly"] || "week";
-        rows.push(displayRow("Every", `<span>1</span><span class="muted">${unit}</span>`));
-        if ((item.repeats || "Weekly") === "Weekly") rows.push(fieldRow("On", "customDay", item.customDay || "Mo"));
+        const everyValue = Math.max(1, Number(item.every || 1));
+        const unitLabel = everyValue === 1 ? unit : `${unit}s`;
+        rows.push(displayRow("Every", `<input class="everyInput" id="everyInput" type="number" min="1" max="99" value="${everyValue}" aria-label="Repeat interval" /><span class="muted">${unitLabel}</span>`));
+        if ((item.repeats || "Weekly") === "Weekly") rows.push(fieldRow("On", "customDay", formatCustomDays(customDays)));
         rows.push(fieldRow("At", "at", item.at));
       }
       rows.push(fieldRow("Notifications", "notification", item.notification || "All runs"));
       document.getElementById("frequencyRows").innerHTML = rows.join("");
       document.getElementById("frequencySettings").classList.toggle("hidden", item.repeat !== "Custom");
       bindFieldTriggers();
+      bindEveryInput(item);
     }
 
     function openDetail(id) {
@@ -1794,6 +1828,8 @@
         at: "9:00 AM",
         weekday: "Monday",
         customDay: "Mo",
+        customDays: ["Mo"],
+        every: 1,
         repeats: "Weekly",
         notification: "All runs",
         runs: []
@@ -1871,8 +1907,8 @@
         button.className = `menuItem ${item.danger ? "danger" : ""}`;
         button.innerHTML = item.icon ? `${item.icon}<span>${item.label}</span>` : `<span>${item.label}</span><span style="margin-left:auto">${item.checked ? checkIcon() : ""}</span>`;
         button.onclick = () => {
-          popover.classList.remove("open");
-          item.action();
+          if (!item.keepOpen) popover.classList.remove("open");
+          item.action(button);
         };
         popover.appendChild(button);
       });
@@ -1932,6 +1968,31 @@
       }
 
       const item = current();
+      if (field === "customDay") {
+        item.customDays = Array.isArray(item.customDays) && item.customDays.length
+          ? [...item.customDays]
+          : [item.customDay || "Mo"];
+        openMenu(anchor, optionSets.customDay.map((value) => ({
+          label: value,
+          checked: item.customDays.includes(value),
+          keepOpen: true,
+          action: (button) => {
+            const selected = new Set(item.customDays);
+            if (selected.has(value) && selected.size > 1) selected.delete(value);
+            else selected.add(value);
+            item.customDays = optionSets.customDay.filter((day) => selected.has(day));
+            item.customDay = item.customDays[0] || "Mo";
+            const checkSlot = button.querySelector("span:last-child");
+            if (checkSlot) checkSlot.innerHTML = item.customDays.includes(value) ? checkIcon() : "";
+            const valueNode = document.getElementById("customDayValue");
+            if (valueNode) valueNode.textContent = formatCustomDays(item.customDays);
+            updateScheduleLabel(item);
+            markDirty();
+            renderLists();
+          }
+        })), { align: "end", width: 220 });
+        return;
+      }
       openMenu(anchor, optionSets[field].map((value) => ({
         label: value,
         checked: item[field] === value,
@@ -1951,7 +2012,12 @@
       else if (item.repeat === "Hourly") item.schedule = "Hourly";
       else if (item.repeat === "Custom") {
         const unit = { Daily: "day", Weekly: "week", Monthly: "month" }[item.repeats || "Weekly"] || "week";
-        item.schedule = `${item.repeats || "Weekly"} every 1 ${unit}`;
+        const everyValue = Math.max(1, Number(item.every || 1));
+        const unitLabel = everyValue === 1 ? unit : `${unit}s`;
+        const daySuffix = (item.repeats || "Weekly") === "Weekly"
+          ? ` on ${formatCustomDays(item.customDays || [item.customDay || "Mo"])}`
+          : "";
+        item.schedule = `${item.repeats || "Weekly"} every ${everyValue} ${unitLabel}${daySuffix}`;
       }
       else item.schedule = `${item.repeat} at ${item.at}`;
     }
@@ -1960,8 +2026,28 @@
       item.notification = item.notification || "All runs";
       item.at = item.at || "11:01 AM";
       item.weekday = item.weekday || "Monday";
-      item.customDay = item.customDay || "Mo";
+      item.customDays = Array.isArray(item.customDays) && item.customDays.length ? item.customDays : [item.customDay || "Mo"];
+      item.customDay = item.customDays[0] || "Mo";
+      item.every = Math.max(1, Number(item.every || 1));
       item.repeats = item.repeats || "Weekly";
+    }
+
+    function bindEveryInput(item) {
+      const input = document.getElementById("everyInput");
+      if (!input) return;
+      input.oninput = () => {
+        item.every = Math.max(1, Number(input.value || 1));
+        updateScheduleLabel(item);
+        markDirty();
+        renderLists();
+      };
+    }
+
+    function formatCustomDays(days) {
+      const selected = Array.isArray(days) && days.length ? days : ["Mo"];
+      if (selected.length <= 4) return selected.join(", ");
+      const leading = selected.slice(0, -1).join(", ");
+      return `${leading}, and ${selected[selected.length - 1]}`;
     }
 
     function openRuntimeMenu(anchor) {
