@@ -419,18 +419,49 @@
       background: var(--ui-surface-subtle);
     }
 
-    .playCircle {
+    .scheduleControl {
       width: 20px;
       height: 20px;
       display: inline-flex;
+      position: relative;
       align-items: center;
       justify-content: center;
+      border: 0;
+      background: transparent;
       color: #8b929b;
+      padding: 0;
     }
 
-    .playCircle svg {
+    .scheduleControl svg {
       width: 20px;
       height: 20px;
+    }
+
+    .scheduleControl:hover {
+      color: var(--ui-text);
+    }
+
+    .scheduleControl::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      right: calc(100% - 12px);
+      bottom: calc(100% + 10px);
+      z-index: 3;
+      display: none;
+      border: 1px solid var(--ui-border-soft);
+      border-radius: var(--radius-md);
+      background: var(--ui-surface);
+      box-shadow: 0 8px 22px rgba(15, 23, 42, .12);
+      color: var(--ui-text);
+      padding: 7px 12px;
+      font-size: var(--font-md);
+      font-weight: 500;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .scheduleControl:hover::after {
+      display: block;
     }
 
     .spinnerIcon {
@@ -440,6 +471,18 @@
       border-top-color: var(--ui-brand);
       border-radius: 999px;
       animation: spin .8s linear infinite;
+    }
+
+    .pauseIcon {
+      display: none;
+    }
+
+    .scheduleControl.isRunning:hover .spinnerIcon {
+      display: none;
+    }
+
+    .scheduleControl.isRunning:hover .pauseIcon {
+      display: block;
     }
 
     @keyframes spin {
@@ -790,6 +833,16 @@
     .emptyRuns {
       color: var(--ui-text-faint);
       font-size: var(--font-sm);
+    }
+
+    .emptyScheduleState {
+      min-height: 260px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #70757d;
+      font-size: var(--font-lg);
+      font-weight: 400;
     }
 
     .popover {
@@ -1294,14 +1347,20 @@
       return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M10 8l6 4-6 4z" fill="currentColor" stroke="none"/></svg>';
     }
 
-    function rowStatusIcon(item) {
-      return item.status === "running" ? '<span class="spinnerIcon"></span>' : playIcon();
+    function pauseIcon() {
+      return '<svg class="pauseIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9.5 8.5v7M14.5 8.5v7"/></svg>';
+    }
+
+    function rowControlMarkup(item) {
+      const tooltip = item.status === "running" ? "Pause" : item.status === "paused" ? "Resume" : "Run now";
+      const icon = item.status === "running" ? '<span class="spinnerIcon"></span>' + pauseIcon() : playIcon();
+      return `<button class="scheduleControl ${item.status === "running" ? "isRunning" : ""}" type="button" data-row-control="${item.id}" data-tooltip="${tooltip}" aria-label="${tooltip}">${icon}</button>`;
     }
 
     function rowMarkup(item, compact = false) {
       return `
         <div class="taskRow ${item.id === selectedId ? "selected" : ""}" role="button" tabindex="0" data-open="${item.id}">
-          <span class="playCircle">${rowStatusIcon(item)}</span>
+          ${rowControlMarkup(item)}
           <span><span class="rowTitle">${item.title}</span><span class="rowMeta">${item.schedule}</span></span>
           <button class="taskMore" type="button" data-row-more="${item.id}" aria-label="Schedule actions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
         </div>
@@ -1321,16 +1380,22 @@
           openScheduleMenu(event.currentTarget, button.dataset.rowMore);
         };
       });
+      document.querySelectorAll("[data-row-control]").forEach((button) => {
+        button.onclick = (event) => {
+          event.stopPropagation();
+          toggleScheduleRunState(button.dataset.rowControl);
+        };
+      });
     }
 
     function renderLists() {
       const rows = filteredSchedules();
       document.getElementById("homeList").innerHTML = rows.length
         ? rows.map((item) => rowMarkup(item)).join("")
-        : '<div class="emptyRuns">No scheduled tasks match this filter.</div>';
+        : '<div class="emptyScheduleState">No scheduled tasks found</div>';
       document.getElementById("sideList").innerHTML = rows.length
         ? rows.map((item) => rowMarkup(item, true)).join("")
-        : '<div class="emptyRuns">No scheduled tasks match this filter.</div>';
+        : '<div class="emptyScheduleState">No scheduled tasks found</div>';
       bindRows();
     }
 
@@ -1509,6 +1574,23 @@
         { label: item?.status === "paused" ? "Resume" : "Pause", icon: playIcon(), action: () => { if (item) item.status = item.status === "paused" ? "active" : "paused"; renderLists(); renderDetail(); } },
         { label: "Delete", danger: true, icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>', action: () => { const idx = schedules.findIndex((entry) => entry.id === id); if (idx >= 0) schedules.splice(idx, 1); if (selectedId === id) closePanel(); else renderLists(); showToast("Schedule deleted"); } }
       ], { align: "end", width: 230 });
+    }
+
+    function toggleScheduleRunState(id) {
+      const item = schedules.find((entry) => entry.id === id);
+      if (!item) return;
+      if (item.status === "running") {
+        item.status = "paused";
+        showToast("Schedule paused");
+      } else if (item.status === "paused") {
+        item.status = "active";
+        showToast("Schedule resumed");
+      } else {
+        item.status = "running";
+        showToast("Run queued");
+      }
+      renderLists();
+      if (selectedId === id) renderDetail();
     }
 
     function openPreviousRunsMenu(anchor) {
