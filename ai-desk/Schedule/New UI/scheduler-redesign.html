@@ -967,21 +967,21 @@
     }
 
     .everyInput {
-      width: 34px;
-      height: 28px;
+      width: 28px;
+      height: 24px;
       border: 0;
-      border-radius: var(--radius-sm);
       background: transparent;
       color: var(--ui-text);
       font-size: var(--font-sm);
       font-weight: 600;
       text-align: right;
       outline: none;
+      caret-color: var(--ui-text);
     }
 
     .everyInput:focus {
-      background: var(--ui-surface-subtle);
-      box-shadow: inset 0 0 0 1px var(--ui-border);
+      background: transparent;
+      box-shadow: none;
     }
 
     .previousRuns {
@@ -1789,7 +1789,7 @@
         const unit = { Daily: "day", Weekly: "week", Monthly: "month" }[item.repeats || "Weekly"] || "week";
         const everyValue = Math.max(1, Number(item.every || 1));
         const unitLabel = everyValue === 1 ? unit : `${unit}s`;
-        rows.push(displayRow("Every", `<input class="everyInput" id="everyInput" type="number" min="1" max="99" value="${everyValue}" aria-label="Repeat interval" /><span class="muted">${unitLabel}</span>`));
+        rows.push(displayRow("Every", `<input class="everyInput" id="everyInput" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="2" value="${everyValue}" aria-label="Repeat interval" /><span class="muted">${unitLabel}</span>`));
         if ((item.repeats || "Weekly") === "Weekly") rows.push(fieldRow("On", "customDay", formatCustomDays(customDays)));
         rows.push(fieldRow("At", "at", item.at));
       }
@@ -2036,7 +2036,9 @@
       const input = document.getElementById("everyInput");
       if (!input) return;
       input.oninput = () => {
-        item.every = Math.max(1, Number(input.value || 1));
+        const digits = input.value.replace(/\D/g, "").slice(0, 2);
+        input.value = digits;
+        item.every = Math.max(1, Number(digits || 1));
         updateScheduleLabel(item);
         markDirty();
         renderLists();
