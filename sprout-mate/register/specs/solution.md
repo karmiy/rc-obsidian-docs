@@ -4,9 +4,9 @@
 
 **注册流程先确定用户所属分组，人员管理流程再处理邀请和权限。**
 
-- 注册页提供「创建分组」和「加入分组」两个模式。
-- 创建分组会创建 `group` 和当前用户，当前用户为 `ADMIN`。
-- 加入分组通过一次性邀请码完成，邀请码服务端映射到 `group_id`，当前用户为 `USER`。
+- 注册页提供「创建分组」和「加入分组」两个模式，两个模式都先确定空间信息，再在当前页面区域选择微信注册或账号密码注册。
+- 创建分组提交 `groupName`，服务端创建 `group` 和当前用户，当前用户为 `ADMIN`。
+- 加入分组提交 `inviteCode`，服务端通过一次性邀请码映射到 `group_id`，当前用户为 `USER`。
 - 管理员在「我的」页面进入人员管理，维护成员角色并生成邀请码。
 
 ## 技术栈
@@ -118,6 +118,8 @@ CREATE TABLE IF NOT EXISTS `group` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='群组表';
 ```
 
+`group.name` 不做唯一约束；同名分组允许存在，它们通过自增 `id` 隔离。
+
 ### user 表
 
 复用现有 `user` 表。
@@ -139,6 +141,7 @@ CREATE TABLE IF NOT EXISTS `group_invite` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `group_id` INT NOT NULL COMMENT '所属群组ID',
   `code_hash` VARCHAR(255) NOT NULL UNIQUE COMMENT '邀请码哈希',
+  `code_cipher` TEXT NOT NULL COMMENT '邀请码密文',
   `created_by` INT NOT NULL COMMENT '创建人用户ID',
   `used_by` INT NULL COMMENT '使用人用户ID',
   `used_at` TIMESTAMP NULL COMMENT '使用时间',
@@ -167,7 +170,14 @@ BANYA-8F6Q
 2. 对随机码进行规范化，例如去空格、转大写。
 3. 计算 `sha256(normalizedCode + InviteSalt)`。
 4. 将 hash 存入 `group_invite.code_hash`。
-5. 将明文邀请码返回给管理员展示和复制。
+5. 将服务端可解密的邀请码密文存入 `group_invite.code_cipher`。
+6. 将明文邀请码返回给管理员展示和复制。
+
+重复生成逻辑：
+
+1. 管理员请求生成邀请码时，服务端先按当前 `group_id` 查询 `is_active = 1` 的记录。
+2. 若存在未使用邀请码，解密 `code_cipher` 并直接返回，不新增记录。
+3. 若不存在未使用邀请码，再生成并插入新记录。
 
 使用逻辑：
 
@@ -175,7 +185,7 @@ BANYA-8F6Q
 2. 服务端规范化输入值并计算 hash。
 3. 查询有效邀请记录：`code_hash` 匹配且 `is_active = 1`。
 4. 创建用户并绑定 `group_id`。
-5. 将邀请记录标记为失效，记录 `used_by` 和 `used_at`。
+5. 注册成功后在同一个事务内物理删除该邀请记录。
 6. 返回 token。
 
 ## 注册流程
@@ -203,6 +213,9 @@ sequenceDiagram
 关键规则：
 
 - 分组名必填。
+- 用户输入分组名后，当前页面区域切换为注册方式选择。
+- 微信注册提交微信 `code` 和 `groupName`；账号密码注册提交 `username`、`password` 和 `groupName`。
+- 账号用户名只能包含英文和数字。
 - 当前用户不可已存在于其他分组。
 - 创建成功后当前用户为 `ADMIN`。
 - 注册接口返回 token，客户端直接进入首页。
@@ -220,7 +233,7 @@ sequenceDiagram
   U->>S: joinGroupByInvite(params)
   S->>DB: find active group_invite by code_hash
   S->>DB: create user(role=USER, group_id=invite.group_id)
-  S->>DB: mark invite inactive
+  S->>DB: delete invite row
   S->>S: sign JWT
   S-->>U: token
   U-->>C: 注册成功
@@ -233,7 +246,7 @@ sequenceDiagram
 - 邀请码必填。
 - 邀请码无效、已使用或不存在时返回明确错误。
 - 加入成功后当前用户为 `USER`。
-- 邀请码使用成功后失效。
+- 邀请码使用成功后从 `group_invite` 物理删除，不能被再次查询或使用。
 
 ## 人员管理流程
 
@@ -382,15 +395,23 @@ POST /user/createGroupInvite
 
 - 标题：`创建成长空间`
 - 说明：`为家人和孩子建立一个专属的任务、学习和奖励空间。`
-- 表单：分组名称
-- 主按钮：`创建并进入`
+- 第一步表单：分组名称
+- 第一步主按钮：`继续注册`
+- 第二步在当前面板区域切换为账号创建内容：
+  - 微信注册：携带 `groupName` 和微信 `code` 调用 `registerCreateGroup`
+  - 账号密码注册：输入英文/数字账号和密码后，携带 `groupName` 调用 `registerCreateGroup`
+- 可从第二步返回修改分组名称。
 
 加入分组模式：
 
 - 标题：`加入成长空间`
 - 说明：`输入家人分享的邀请码，加入同一个成长空间。`
-- 表单：邀请码
-- 主按钮：`加入并进入`
+- 第一步表单：邀请码
+- 第一步主按钮：`继续注册`
+- 第二步在当前面板区域切换为账号创建内容：
+  - 微信注册：点击后获取微信 code，并携带邀请码调用 `registerJoinGroup`
+  - 账号密码注册：输入英文/数字账号、密码后，携带邀请码调用 `registerJoinGroup`
+- 注册接口失败时停留在当前注册方式区域，展示服务端错误，允许用户修改账号或返回上一步修改邀请码。
 
 ### 人员管理页
 
@@ -442,6 +463,7 @@ export default function () {
 
 - `ConfigListPanel` 内部已经使用 `StatusWrapper`，人员管理列表不需要自建 loading/empty UI。
 - 若邀请生成弹窗或角色编辑弹窗需要展示异步状态，使用 `Button loading` 或已有 `StatusWrapper`。
+- 成员权限弹框中，点击角色选项只更新本地选中态，不直接调用更新接口；底部「保存权限」按钮提交变更，保存过程只在按钮上展示 loading。
 - 成员项样式使用现有 token，角色标签使用 `$--color-red`、`$--color-accent-blue`、`$--text-color-secondary` 等变量，不写死颜色。
 
 ## 错误处理
@@ -449,9 +471,9 @@ export default function () {
 | 场景 | 错误提示 |
 |------|----------|
 | 分组名为空 | 请输入分组名称 |
-| 分组名重复 | 该分组名称已存在 |
 | 邀请码为空 | 请输入邀请码 |
 | 邀请码不存在或已失效 | 邀请码无效或已被使用 |
+| 账号包含中文或特殊字符 | 账号只能使用英文和数字 |
 | 用户已注册 | 该账号已注册，请直接登录 |
 | 非管理员访问 | 无权限操作 |
 | 降级最后一个管理员 | 至少保留一名管理员 |
@@ -466,11 +488,15 @@ export function useUserAction() {
   const [isActionLoading, setIsActionLoading] = useState(false);
 
   const handleRegisterCreateGroup = useCallback(
-    async (params: { groupName: string }) => {
+    async (params: { groupName: string; username?: string; password?: string }) => {
       try {
         setIsActionLoading(true);
-        const { code } = await taroLogin();
-        await sdk.modules.user.registerCreateGroup({ code, groupName: params.groupName });
+        if (params.username) {
+          await sdk.modules.user.registerCreateGroup(params);
+        } else {
+          const { code } = await taroLogin();
+          await sdk.modules.user.registerCreateGroup({ code, groupName: params.groupName });
+        }
         await bootstrap();
         navigateToPage({ pageName: PAGE_ID.HOME, isRelaunch: true });
       } finally {
@@ -522,6 +548,8 @@ export function useUserAction() {
 - 所有人员管理接口都必须校验 `role = ADMIN`。
 - 所有成员查询和更新都必须限定当前 `group_id`。
 - 邀请码使用成功后必须失效。
+- 管理员重复生成邀请码时必须优先返回当前分组未使用的邀请码，不新增重复记录。
+- 邀请码消费成功后必须物理删除对应记录。
 - 注册成功后必须返回 token 并进入正常 bootstrap 流程。
 - 数据库变更必须提供迁移脚本。
 - 新增前端页面必须优先复用现有组件、容器、状态视图和主题 token。

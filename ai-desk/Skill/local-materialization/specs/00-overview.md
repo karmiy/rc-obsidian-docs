@@ -39,7 +39,7 @@ flowchart TD
   BatchWrite --> ManifestWrite["daemon file/write 写 manifest.json"]
   BatchDelete --> ManifestWrite
 
-  TaskCreate["创建 task workspace"] --> EnsureLinks["daemon file/symlink 创建 .codex/.claude/.cursor/.github skills symlink"]
+  TaskCreate["创建 task workspace"] --> EnsureLinks["daemon file/symlink 创建 .codex/.claude/.cursor/.github/.agents skills symlink"]
   ManifestWrite --> GlobalSkills["~/.aidesktop/skills"]
   GlobalSkills --> EnsureLinks
   EnsureLinks --> RuntimeStart["runtime 以 workspace root 作为 cwd 启动"]
@@ -72,6 +72,7 @@ flowchart TD
 .claude/skills -> ~/.aidesktop/skills
 .cursor/skills -> ~/.aidesktop/skills
 .github/skills -> ~/.aidesktop/skills
+.agents/skills -> ~/.aidesktop/skills
 ```
 
 Runtime-visible skill 目录为 `~/.aidesktop/skills/{dirName}`。

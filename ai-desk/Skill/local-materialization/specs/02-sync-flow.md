@@ -29,15 +29,15 @@ flowchart LR
 
 ## BE API Inventory
 
-| API / Event | 状态 | 调用方 | 用途 |
-| --- | --- | --- | --- |
-| `POST /api/v1/skills/{skillId}/install` | 已有，需补事件发送 | FE Settings skills | install 成功后发布当前用户 `/users/{extensionId}/skills/updated`。 |
-| `DELETE /api/v1/skills/{skillId}/install` | 已有，需补事件发送 | FE Settings skills | uninstall 成功后发布当前用户 `/users/{extensionId}/skills/updated`。 |
-| `PUT /api/v1/skills/{skillId}` / import sync endpoints | 已有，需补事件发送 | FE Settings skills | version update 成功后发布安装用户 `/users/{extensionId}/skills/updated`。 |
-| `GET /api/v1/skills/installed-manifest` | 需要新增 | FE local sync service | 拉取当前用户 installed skills 的轻量 manifest。 |
-| `POST /api/v1/skills/installed-bundles:download` | 需要新增 | FE local sync service | 下载需要写入的 skill bundle。 |
-| `POST /api/v1/events/subscriptions` | 已有，需补用户路径校验 | FE event bus | 订阅 `/users/{extensionId}/skills/updated` 时校验只能订阅当前用户。 |
-| Event pattern `/users/~/skills/updated` | 需要新增 registry pattern | BE -> FE event bus | 通知指定用户的在线 FE 重新拉 manifest。 |
+| API / Event                                            | 状态                    | 调用方                   | 用途                                                              |
+| ------------------------------------------------------ | --------------------- | --------------------- | --------------------------------------------------------------- |
+| `POST /api/v1/skills/{skillId}/install`                | 已有，需补事件发送             | FE Settings skills    | install 成功后发布当前用户 `/users/{extensionId}/skills/updated`。        |
+| `DELETE /api/v1/skills/{skillId}/install`              | 已有，需补事件发送             | FE Settings skills    | uninstall 成功后发布当前用户 `/users/{extensionId}/skills/updated`。      |
+| `PUT /api/v1/skills/{skillId}` / import sync endpoints | 已有，需补事件发送             | FE Settings skills    | version update 成功后发布安装用户 `/users/{extensionId}/skills/updated`。 |
+| `GET /api/v1/skills/installed-manifest`                | 需要新增                  | FE local sync service | 拉取当前用户 installed skills 的轻量 manifest。                           |
+| `POST /api/v1/skills/installed-bundles:download`       | 需要新增                  | FE local sync service | 下载需要写入的 skill bundle。                                           |
+| `POST /api/v1/events/subscriptions`                    | 已有，需补用户路径校验           | FE event bus          | 订阅 `/users/{extensionId}/skills/updated` 时校验只能订阅当前用户。           |
+| Event pattern `/users/~/skills/updated`                | 需要新增 registry pattern | BE -> FE event bus    | 通知指定用户的在线 FE 重新拉 manifest。                                      |
 
 ## BE Installed Manifest API
 
@@ -191,12 +191,15 @@ sequenceDiagram
   BE-->>FE: server manifest
   FE->>D: POST /file/read ~/.aidesktop/skills/manifest.json
   D-->>FE: local manifest or not found
+  FE->>D: POST /file/list ~/.aidesktop/skills { depth: 1, onlyDirs: true }
+  D-->>FE: physical direct-child directories
   FE->>FE: normalize names
-  FE->>FE: diff by id + version + dirName
+  FE->>FE: diff server manifest + local manifest + physical directories
   FE->>BE: POST /skills/installed-bundles:download { ids }
   BE-->>FE: full bundles
   FE->>D: POST /file/write-tree-batch { writes }
   D-->>FE: written[] / failed[]
+  FE->>FE: merge tracked deletes + orphan directory deletes
   FE->>D: POST /file/delete-batch { paths }
   D-->>FE: deleted[] / failed[]
   FE->>D: POST /file/write manifest.json { skills, issues }
@@ -218,23 +221,30 @@ Diff algorithm：
    - `name` 是 BE raw skill name。
    - `dirName = normalizeSkillDirName(name)` 是 runtime-visible directory。
    - duplicate raw name 或 duplicate normalized `dirName` 按 server manifest 顺序生成 writes。
-3. 生成 `writeSet`：
+3. 读取物理目录清单：
+   - 调 daemon `POST /file/list`，参数为 `path=~/.aidesktop/skills`、`depth=1`、`onlyDirs=true`、`includeHidden=true`。
+   - 只纳入 skills 根目录的直接子目录；`manifest.json` 不会进入目录清单，也始终受保护。
+   - file/list 失败时结束本轮 sync，不执行 write/delete，保留当前本地状态。
+4. 生成 `writeSet`：
    - 对每个 server entry，找到同 id 的 local record。
-   - local record 不存在，或 `version` / `dirName` 任一不同，则加入 `writeSet`。
+   - local record 不存在，或 `version` / `dirName` 任一不同，或对应 `dirName` 不在物理目录清单中，则加入 `writeSet`。
    - local record 存在且 `version`、`dirName` 都相同，则不写。
-4. 生成 `deleteSet`：
+5. 生成 `deleteSet`：
    - local manifest 中存在但 server manifest 不存在的 id，删除旧 record 的 `dirName`。
    - 同 id 进入 `writeSet` 且旧 `dirName` 与新 `dirName` 不同，写入新目录成功后删除旧 `dirName`。
    - server entry normalize 后没有有效 `dirName` 时，如果 local manifest 有旧 `dirName`，删除旧 record 的 `dirName`。
-5. 下载 `writeSet` 中 ids 的 bundles。
-6. 调 daemon `write-tree-batch` 写 `writeSet` 的完整 skill directory，所有 item 使用 `replace=true`。
-7. 调 daemon `delete-batch` 删除 `deleteSet`。
-8. 根据 batch response 构建下一版 local manifest：
+   - 物理目录清单中存在、但不属于 server manifest 当前 `dirName` 集合的直接子目录，加入 `deleteSet` 作为 orphan 目录。
+   - 合并删除项后按 `dirName` 去重；`manifest.json` 不得加入 `deleteSet`。
+6. 下载 `writeSet` 中 ids 的 bundles。
+7. 调 daemon `write-tree-batch` 写 `writeSet` 的完整 skill directory，所有 item 使用 `replace=true`。
+8. 调 daemon `delete-batch` 一次删除合并后的 `deleteSet`。
+9. 根据 batch response 构建下一版 local manifest：
    - `writeSet` 写入成功的 entry 写入或更新 `skills`。
    - `writeSet` 写入失败的 entry 写入本轮 `issues`；local 已有旧 record 时保留旧 record，local 没有旧 record 时不新增 record。
    - `deleteSet` 删除成功的旧 record 从 `skills` 移除。
    - `deleteSet` 删除失败的旧 record 保留在 `skills`，失败项写入本轮 `issues`。
-9. 调 daemon `file/write` 写 `manifest.json`。
+   - orphan 目录删除失败时不新增 `skills` record，只在本轮 `issues` 记录 `delete_failed`。
+10. 调 daemon `file/write` 写 `manifest.json`。
 
 ## 失败处理
 

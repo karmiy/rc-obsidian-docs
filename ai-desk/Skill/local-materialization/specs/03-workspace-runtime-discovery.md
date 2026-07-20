@@ -16,6 +16,7 @@ AI Desk task 运行在 AI Desk 管理的 workspace 外层目录。provider skill
   .claude/skills -> ~/.aidesktop/skills
   .cursor/skills -> ~/.aidesktop/skills
   .github/skills -> ~/.aidesktop/skills
+  .agents/skills -> ~/.aidesktop/skills
   FIJI/           # task project entry
 ```
 
@@ -61,6 +62,8 @@ sequenceDiagram
   FE->>D: symlink workspace/.cursor/skills -> ~/.aidesktop/skills when missing
   FE->>D: stat workspace/.github/skills
   FE->>D: symlink workspace/.github/skills -> ~/.aidesktop/skills when missing
+  FE->>D: stat workspace/.agents/skills
+  FE->>D: symlink workspace/.agents/skills -> ~/.aidesktop/skills when missing
   FE->>RT: start runtime with cwd=workspace root
   RT->>WS: scan native skills directories
   RT-->>FE: can use installed skills naturally
@@ -76,6 +79,7 @@ sequenceDiagram
 | `{workspaceRoot}/.claude/skills` | `~/.aidesktop/skills` |
 | `{workspaceRoot}/.cursor/skills` | `~/.aidesktop/skills` |
 | `{workspaceRoot}/.github/skills` | `~/.aidesktop/skills` |
+| `{workspaceRoot}/.agents/skills` | `~/.aidesktop/skills` |
 
 ## Provider Skills Symlink API
 

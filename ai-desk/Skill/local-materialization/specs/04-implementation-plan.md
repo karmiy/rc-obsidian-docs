@@ -288,6 +288,7 @@ async function syncInstalledSkills(trigger: LocalSkillSyncTrigger) {
   - `.claude/skills`
   - `.cursor/skills`
   - `.github/skills`
+  - `.agents/skills`
 - 不改变 task project entry 创建策略；无论 project entry 是 checkout 还是 symlink，provider skills symlink 都在 workspace 外层。
 - local runtime CLI 启动 cwd 必须是 workspace 外层或等价 provider runtime root。
 
@@ -303,7 +304,7 @@ async function syncInstalledSkills(trigger: LocalSkillSyncTrigger) {
 flowchart TD
   Install["用户安装 bug-analysis"] --> Event["BE 发 /users/{extensionId}/skills/updated"]
   Event --> Sync["FE sync 到 ~/.aidesktop/skills/bug-analysis"]
-  Task["创建 task"] --> Link["workspace .codex/.claude/.cursor/.github skills symlink"]
+  Task["创建 task"] --> Link["workspace .codex/.claude/.cursor/.github/.agents skills symlink"]
   Sync --> Link
   Link --> Runtime["启动 runtime"]
   Runtime --> Natural["用户自然语言触发 skill"]
