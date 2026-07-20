@@ -1734,10 +1734,10 @@
     }
 
     function runRowMarkup(run) {
-      const unreadDot = run.read === false ? "●" : "•";
+      const unreadDot = run.read === false ? "●" : "";
       return `
         <div class="runRow ${run.archived ? "archived" : ""}" data-open-task="${run.taskId}" aria-label="Open ${run.title} chat task">
-          <span style="color:${run.read === false ? "var(--ui-brand)" : runStatusColor(run.status)}">${unreadDot}</span>
+          <span style="color:var(--ui-brand)">${unreadDot}</span>
           <strong>${run.title}</strong>
           <small>${run.age}</small>
           <button class="runMore" type="button" data-run-more="${run.id}" aria-label="Run actions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
