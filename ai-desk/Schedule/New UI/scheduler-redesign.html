@@ -1253,6 +1253,7 @@
     let filter = "all";
     let query = "";
     let isDirty = false;
+    let draftSchedule = null;
 
     const scheduler = document.getElementById("scheduler");
     const createTop = document.getElementById("createTop");
@@ -1260,6 +1261,7 @@
     const toast = document.getElementById("toast");
 
     function current() {
+      if (selectedId === "__draft") return draftSchedule;
       return schedules.find((item) => item.id === selectedId);
     }
 
@@ -1396,8 +1398,7 @@
     }
 
     function openCreate(seed = "") {
-      const existing = schedules.find((item) => item.id === "__draft");
-      const draft = {
+      draftSchedule = {
         id: "__draft",
         title: "",
         status: "active",
@@ -1415,8 +1416,6 @@
         notification: "All runs",
         runs: []
       };
-      if (existing) Object.assign(existing, draft);
-      else schedules.unshift(draft);
       selectedId = "__draft";
       mode = "create";
       isDirty = true;
@@ -1429,10 +1428,7 @@
     }
 
     function closePanel() {
-      if (mode === "create") {
-        const index = schedules.findIndex((item) => item.id === "__draft");
-        if (index >= 0) schedules.splice(index, 1);
-      }
+      draftSchedule = null;
       mode = "home";
       selectedId = "";
       isDirty = false;
@@ -1681,6 +1677,20 @@
     document.getElementById("closeButton").onclick = closePanel;
     document.getElementById("runButton").onclick = () => showToast("Run queued");
     document.getElementById("saveButton").onclick = () => {
+      if (mode === "create" && draftSchedule) {
+        const created = {
+          ...draftSchedule,
+          id: `schedule-${Date.now()}`,
+          title: draftSchedule.title.trim() || "Untitled schedule",
+          runs: []
+        };
+        schedules.unshift(created);
+        selectedId = created.id;
+        mode = "detail";
+        draftSchedule = null;
+        renderLists();
+        renderDetail();
+      }
       isDirty = false;
       updateSaveState();
       showToast("Schedule saved");
