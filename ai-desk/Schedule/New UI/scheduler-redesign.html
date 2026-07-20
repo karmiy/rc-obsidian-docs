@@ -132,6 +132,7 @@
     .chatItem {
       border: 1px solid transparent;
       background: transparent;
+      cursor: pointer;
     }
 
     .chatItem.active {
@@ -299,6 +300,13 @@
       height: 100%;
       overflow: hidden;
       background: var(--ui-surface);
+      transition: opacity .18s ease, transform .24s cubic-bezier(.2, .8, .2, 1);
+    }
+
+    .scheduler.hiddenView {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(-18px);
     }
 
     .home {
@@ -593,6 +601,150 @@
       transform: translateX(0);
       opacity: 1;
       pointer-events: auto;
+    }
+
+    .conversationView {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      background: var(--ui-surface);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(18px);
+      transition: opacity .2s ease, transform .28s cubic-bezier(.2, .8, .2, 1);
+    }
+
+    .conversationView.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateX(0);
+    }
+
+    .conversationTop {
+      min-height: 52px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid var(--ui-border-soft);
+      padding: 0 18px;
+    }
+
+    .conversationTitle {
+      min-width: 0;
+      overflow: hidden;
+      color: var(--ui-text);
+      font-size: var(--font-sm);
+      font-weight: 700;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .conversationMeta {
+      margin-left: auto;
+      color: var(--ui-text-faint);
+      font-size: var(--font-xs);
+      font-weight: 650;
+    }
+
+    .conversationBody {
+      flex: 1;
+      min-height: 0;
+      overflow: auto;
+      padding: 48px min(11vw, 120px) 120px;
+    }
+
+    .conversationStream {
+      width: min(760px, 100%);
+      margin: 0 auto;
+    }
+
+    .conversationStep {
+      display: grid;
+      grid-template-columns: 90px minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+      padding: 20px 0;
+    }
+
+    .conversationStep + .conversationStep {
+      border-top: 1px solid var(--ui-border-soft);
+    }
+
+    .stepLabel {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--ui-text-muted);
+      font-size: var(--font-sm);
+      font-weight: 700;
+    }
+
+    .stepLabel svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .messageBubble {
+      width: fit-content;
+      max-width: min(560px, 100%);
+      border-radius: 18px;
+      background: var(--ui-surface-subtle);
+      color: var(--ui-text);
+      padding: 14px 18px;
+      font-size: var(--font-sm);
+      font-weight: 520;
+      line-height: 1.55;
+    }
+
+    .agentText {
+      color: var(--ui-text);
+      font-size: var(--font-sm);
+      line-height: 1.65;
+      white-space: pre-line;
+    }
+
+    .composer {
+      position: absolute;
+      right: min(8vw, 110px);
+      bottom: 28px;
+      left: min(8vw, 110px);
+      min-height: 112px;
+      border: 1px solid color-mix(in srgb, var(--ui-brand) 60%, var(--ui-border));
+      border-radius: var(--radius-lg);
+      background: var(--ui-surface);
+      box-shadow: 0 14px 46px rgba(15, 23, 42, .08);
+      padding: 18px;
+    }
+
+    .composerPlaceholder {
+      color: var(--ui-text-faint);
+      font-size: var(--font-md);
+      font-weight: 520;
+    }
+
+    .composerBar {
+      position: absolute;
+      right: 18px;
+      bottom: 14px;
+      left: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--ui-text-muted);
+    }
+
+    .composerPill {
+      display: inline-flex;
+      min-height: 30px;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      background: var(--ui-surface-subtle);
+      color: var(--ui-text);
+      padding: 0 12px;
+      font-size: var(--font-xs);
+      font-weight: 700;
     }
 
     .side {
@@ -1250,6 +1402,38 @@
           </section>
         </div>
       </section>
+
+      <section class="conversationView" id="conversationView" aria-label="Free chat task">
+        <div class="conversationTop">
+          <button class="iconBtn ghost" type="button" id="backToScheduler" aria-label="Back to scheduler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <div class="conversationTitle" id="conversationTitle">Daily task sync</div>
+          <div class="conversationMeta" id="conversationMeta">Opened from Previous runs</div>
+        </div>
+        <div class="conversationBody">
+          <div class="conversationStream">
+            <div class="conversationStep">
+              <div class="stepLabel"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>Worked</div>
+              <div class="messageBubble" id="conversationPrompt"></div>
+            </div>
+            <div class="conversationStep">
+              <div class="stepLabel">Thought <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></div>
+              <div class="agentText" id="conversationAnswer"></div>
+            </div>
+          </div>
+        </div>
+        <div class="composer">
+          <div class="composerPlaceholder">Message this agent</div>
+          <div class="composerBar">
+            <button class="iconBtn ghost" type="button" aria-label="Add"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg></button>
+            <button class="iconBtn ghost" type="button" aria-label="Attach"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.4 11.6l-8.5 8.5a5 5 0 0 1-7.1-7.1l9.2-9.2a3.5 3.5 0 0 1 5 5l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg></button>
+            <span class="composerPill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.5-9.6A4.5 4.5 0 1 1 17.5 19z"/></svg>Claude Haiku 4.5</span>
+            <span class="composerPill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/></svg>High</span>
+            <span style="margin-left:auto"></span>
+            <span class="composerPill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="8" width="12" height="9" rx="2"/><path d="M9 8V6h6v2"/></svg>Mode: Agent</span>
+            <button class="iconBtn ghost" type="button" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
 
@@ -1344,6 +1528,33 @@
       monitor: "Review recent task activity and flag anything that needs your attention."
     };
 
+    const chatTasks = {
+      "chat-daily-sync": {
+        title: "Daily task sync",
+        age: "1d",
+        prompt: "Check today's open task updates and summarize the changes.",
+        answer: "Today's open tasks are steady. Nova Studio has two release blockers that need owner confirmation, and FIJI-104242 is waiting on review. Suggested next action: ask the assignee to confirm whether the deployment note is still current."
+      },
+      "chat-release-104242": {
+        title: "Release readiness",
+        age: "1d",
+        prompt: "Check Nova Studio release readiness. Review open task status, unresolved MR blockers, and summarize the next action owner.",
+        answer: "Nova Studio is close to ready, but not clean yet.\n\nOpen blockers:\n- FIJI-104242 still needs one review pass.\n- Release notes are missing the scheduler migration callout.\n\nNext owner: Charles should confirm the MR state, then the release can move to final verification."
+      },
+      "chat-release-104201": {
+        title: "Release follow-up",
+        age: "2d",
+        prompt: "Follow up on yesterday's release readiness notes.",
+        answer: "The earlier blocker list has mostly cleared. One follow-up remains: confirm whether the backend_gleam schedule delegation envs are present in staging before announcing the feature."
+      },
+      "chat-mr-149323": {
+        title: "Weekly MR review",
+        age: "3d",
+        prompt: "Review open merge requests for voip-media-module every Friday. Summarize stale reviews, risk, and next follow-up.",
+        answer: "The weekly MR review paused because one branch needs a human choice before continuing. The task is ready to resume once the target branch is confirmed."
+      }
+    };
+
     const optionSets = {
       project: ["None", "Nova Studio", "voip-media-module", "assistant-runtime"],
       repeat: ["Daily", "Weekdays", "Weekly", "Hourly", "Custom"],
@@ -1363,6 +1574,7 @@
 
     const scheduler = document.getElementById("scheduler");
     const createTop = document.getElementById("createTop");
+    const conversationView = document.getElementById("conversationView");
     const popover = document.getElementById("popover");
     const toast = document.getElementById("toast");
 
@@ -1497,8 +1709,25 @@
       document.querySelectorAll(".chatItem").forEach((item) => {
         item.classList.toggle("active", item.dataset.chatId === taskId);
       });
-      const target = document.querySelector(`[data-chat-id="${taskId}"] strong`);
-      showToast(`Opening free chat task: ${target ? target.textContent : taskId}`);
+      const task = chatTasks[taskId] || {
+        title: "Scheduled run",
+        age: "",
+        prompt: "Open the generated free chat task.",
+        answer: "This run opened from the schedule's Previous runs list."
+      };
+      document.getElementById("conversationTitle").textContent = task.title;
+      document.getElementById("conversationMeta").textContent = task.age ? `Previous run · ${task.age}` : "Previous run";
+      document.getElementById("conversationPrompt").textContent = task.prompt;
+      document.getElementById("conversationAnswer").textContent = task.answer;
+      scheduler.classList.add("hiddenView");
+      conversationView.classList.add("active");
+      createTop.classList.add("hidden");
+    }
+
+    function backToScheduler() {
+      conversationView.classList.remove("active");
+      scheduler.classList.remove("hiddenView");
+      createTop.classList.toggle("hidden", mode !== "home");
     }
 
     function chevronSvg() {
@@ -1541,6 +1770,8 @@
       selectedId = id;
       mode = "detail";
       isDirty = false;
+      conversationView.classList.remove("active");
+      scheduler.classList.remove("hiddenView");
       scheduler.classList.add("detailMode");
       createTop.classList.add("hidden");
       renderLists();
@@ -1570,6 +1801,8 @@
       selectedId = "__draft";
       mode = "create";
       isDirty = true;
+      conversationView.classList.remove("active");
+      scheduler.classList.remove("hiddenView");
       scheduler.classList.add("detailMode");
       createTop.classList.add("hidden");
       renderLists();
@@ -1583,6 +1816,8 @@
       mode = "home";
       selectedId = "";
       isDirty = false;
+      conversationView.classList.remove("active");
+      scheduler.classList.remove("hiddenView");
       scheduler.classList.remove("detailMode");
       createTop.classList.remove("hidden");
       renderLists();
@@ -1843,6 +2078,10 @@
     document.getElementById("createButton").onclick = () => openCreate();
     document.getElementById("sideCreateButton").onclick = () => openCreate();
     document.getElementById("closeButton").onclick = closePanel;
+    document.getElementById("backToScheduler").onclick = backToScheduler;
+    document.querySelectorAll("[data-chat-id]").forEach((item) => {
+      item.onclick = () => openRunTask(item.dataset.chatId);
+    });
     document.getElementById("runButton").onclick = () => showToast("Run queued");
     document.getElementById("saveButton").onclick = () => {
       if (mode === "create" && draftSchedule) {
